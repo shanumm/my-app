@@ -7,6 +7,7 @@ import Onboard from "./Onboard";
 import LocationComponent from "./Location";
 import AuthLoading from "./AuthLoading";
 import ProfileView from "./ProfileView";
+import FullScreenSearch from "./Screens/FullScreenSearch";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -27,7 +28,7 @@ const HomeNavigator = () => {
 const Layout = () => {
   return (
     <Stack.Navigator>
-      {/* <Stack.Screen
+      <Stack.Screen
         name="AuthLoading"
         component={AuthLoading}
         options={{ headerShown: false }}
@@ -46,15 +47,20 @@ const Layout = () => {
         name="Location"
         component={LocationComponent}
         options={{ headerShown: false }}
-      /> */}
-      {/* <Stack.Screen
+      />
+      <Stack.Screen
         name="HomeNavigator"
         component={HomeNavigator}
         options={{ headerShown: false }}
-      /> */}
+      />
       <Stack.Screen
         name="ProfileView"
         component={ProfileView}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SearchComponent"
+        component={FullScreenSearch}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

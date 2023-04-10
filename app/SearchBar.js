@@ -1,5 +1,6 @@
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import { View, TextInput, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 
 // Define your styles here
 const styles = StyleSheet.create({
@@ -9,13 +10,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F0F0",
     borderRadius: 8,
     paddingHorizontal: 8,
-    marginBottom: 16,
+    paddingVertical: 8,
+    marginVertical: 8,
   },
-  searchInput: {
+  searchPlaceholder: {
     flex: 1,
     padding: 8,
     backgroundColor: "transparent",
     fontSize: 16,
+    color: "gray",
   },
   searchIcon: {
     width: 20,
@@ -24,25 +27,27 @@ const styles = StyleSheet.create({
   },
 });
 
-const SearchBar = ({ searchQuery, fetchSearchResults }) => {
+const SearchBar = ({ fromLanding }) => {
+  const navigation = useNavigation();
+
+  const handlePress = () => {
+    if (fromLanding) {
+      navigation.navigate("SearchComponent");
+    }
+  };
+
   return (
-    <View style={styles.searchBarContainer}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search"
-        placeholderTextColor="gray"
-        value={searchQuery}
-        onChangeText={(text) => {
-        //   fetchSearchResults(text);
-        }}
-      />
-      <Image
-        source={{
-          uri: "https://cdn-icons-png.flaticon.com/512/482/482631.png",
-        }}
-        style={styles.searchIcon}
-      />
-    </View>
+    <TouchableOpacity onPress={handlePress}>
+      <View style={styles.searchBarContainer}>
+        <Text style={styles.searchPlaceholder}>Search</Text>
+        <Image
+          source={{
+            uri: "https://cdn-icons-png.flaticon.com/512/482/482631.png",
+          }}
+          style={styles.searchIcon}
+        />
+      </View>
+    </TouchableOpacity>
   );
 };
 

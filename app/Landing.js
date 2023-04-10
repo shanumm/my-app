@@ -8,10 +8,11 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  ImageBackground,
 } from "react-native";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import {
   Menu,
   MenuOptions,
@@ -24,8 +25,9 @@ import { Picker } from "@react-native-picker/picker";
 import { signOut } from "firebase/auth";
 import * as Location from "expo-location";
 import { getDistanceFromLatLonInKm } from "./Helper Functions/distanceCalc";
+import SearchBar from "./SearchBar";
 
-const Landing = () => {
+const Landing = ({ route }) => {
   const [name, setName] = useState("");
   const [navBarHeight, setNavBarHeight] = useState(0);
   const navigation = useNavigation();
@@ -33,8 +35,11 @@ const Landing = () => {
   const [radius, setRadius] = useState(20000); // Set default radius to 1000 meters
   const [popularPlaces, setPopularPlaces] = useState([]);
   const [location, setLocation] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [fromSearchScreen, setFromSearchScreen] = useState(false);
+  const [searchLocation, setSearchLocation] = useState(null);
+  const [mapRef, setMapRef] = useState(null);
+  const [polylineCoordinates, setPolylineCoordinates] = useState([]);
+  const [initialTripDetails, setInitialTripDetails] = useState(null);
 
   useEffect(() => {
     const isUserLoggedIn = async () => {
@@ -51,6 +56,75 @@ const Landing = () => {
     };
     isUserLoggedIn();
   }, []);
+
+  useEffect(() => {
+    if (route.params?.fromSearchScreen) {
+      setFromSearchScreen(route.params.fromSearchScreen);
+      setSearchLocation(route.params?.selectedItem);
+    }
+  }, [route]);
+  useEffect(() => {
+    const getDirections = async () => {
+      const origin = {
+        longitude: location.coords.longitude,
+        latitude: location.coords.latitude,
+      };
+
+      const destination = {
+        latitude: parseFloat(searchLocation.lat),
+        longitude: parseFloat(searchLocation.lon),
+      };
+      try {
+        const response = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson`
+        );
+        const data = await response.json();
+        if (data.code === "Ok") {
+          setInitialTripDetails(data);
+          const polylinePoints = data.routes[0].geometry.coordinates.map(
+            (point) => ({
+              latitude: point[1],
+              longitude: point[0],
+            })
+          );
+          setPolylineCoordinates(polylinePoints);
+
+          const minLat = Math.min(
+            origin.latitude,
+            destination.latitude,
+            ...polylinePoints.map((point) => point.latitude)
+          );
+          const maxLat = Math.max(
+            origin.latitude,
+            destination.latitude,
+            ...polylinePoints.map((point) => point.latitude)
+          );
+          const minLng = Math.min(
+            origin.longitude,
+            destination.longitude,
+            ...polylinePoints.map((point) => point.longitude)
+          );
+          const maxLng = Math.max(
+            origin.longitude,
+            destination.longitude,
+            ...polylinePoints.map((point) => point.longitude)
+          );
+
+          setRegion({
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLng + maxLng) / 2,
+            latitudeDelta: (maxLat - minLat) * 1.2,
+            longitudeDelta: (maxLng - minLng) * 1.2,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    if (searchLocation && fromSearchScreen) {
+      getDirections();
+    }
+  }, [location, searchLocation]);
 
   const handleLogout = () => {
     signOut(auth)
@@ -83,6 +157,8 @@ const Landing = () => {
       setMapRegionWithRadius(region.latitude, region.longitude, newRadius);
       getNearByPlaces(newRadius);
     }
+    setFromSearchScreen(false);
+    setSearchLocation(null);
   };
 
   const getNearByPlaces = async (newRadius) => {
@@ -193,7 +269,41 @@ const Landing = () => {
     );
   };
 
-  const SearchButton = () => <View></View>;
+  const DetailsCard = () => {
+    if (initialTripDetails) {
+      const distanceInKm = initialTripDetails?.routes[0]?.distance / 1000 || 1;
+      const durationInMinutes =
+        initialTripDetails?.routes[0]?.duration / 60 || 10;
+
+      const durationString =
+        durationInMinutes < 60
+          ? `${Math.round(durationInMinutes)} min`
+          : `${Math.floor(durationInMinutes / 60)} hr ${Math.round(
+              durationInMinutes % 60
+            )} min`;
+
+      return (
+        <View style={styles.card}>
+          <ImageBackground
+            source={{
+              uri: "https://cdn.pixabay.com/photo/2022/07/09/07/14/abstract-7310312_960_720.png",
+            }}
+            style={styles.bgImage}
+            resizeMode="cover"
+          >
+            <View style={styles.cardContent}>
+              <Text style={styles.title}>
+                {searchLocation.display_name || "Test"}
+              </Text>
+              <Text style={styles.details}>
+                {distanceInKm.toFixed(1)} km, {durationString}
+              </Text>
+            </View>
+          </ImageBackground>
+        </View>
+      );
+    } else return null;
+  };
 
   const HomeScreen = () => (
     <View style={[styles.container, { paddingTop: navBarHeight + 16 }]}>
@@ -233,7 +343,7 @@ const Landing = () => {
           </MenuOptions>
         </Menu>
       </View>
-      <SearchButton />
+      <SearchBar fromLanding={true} />
       <View style={styles.radiusPickerContainer}>
         <Text style={styles.radiusPickerLabel}>Radius:</Text>
         <Picker
@@ -251,7 +361,7 @@ const Landing = () => {
         </Picker>
       </View>
       <View style={styles.mapContainer}>
-        <MapView style={styles.map} region={region}>
+        <MapView style={styles.map} region={region} ref={mapRef}>
           {location && (
             <Marker coordinate={location.coords} title="Selected Location">
               <Image
@@ -263,14 +373,13 @@ const Landing = () => {
               />
             </Marker>
           )}
-          {popularPlaces.map((place) => (
+          {fromSearchScreen && searchLocation && (
             <Marker
-              key={place.id}
               coordinate={{
-                latitude: place.lat,
-                longitude: place.lon,
+                latitude: parseFloat(searchLocation.lat),
+                longitude: parseFloat(searchLocation.lon),
               }}
-              title={place.tags.name}
+              title={searchLocation.name}
             >
               <Image
                 source={{
@@ -280,19 +389,49 @@ const Landing = () => {
                 resizeMode="contain"
               />
             </Marker>
-          ))}
+          )}
+          {!searchLocation &&
+            popularPlaces.map((place) => (
+              <Marker
+                key={place.id}
+                coordinate={{
+                  latitude: place.lat,
+                  longitude: place.lon,
+                }}
+                title={place.tags.name}
+              >
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+                  }}
+                  style={{ width: 30, height: 30 }}
+                  resizeMode="contain"
+                />
+              </Marker>
+            ))}
+          {fromSearchScreen &&
+            searchLocation &&
+            polylineCoordinates.length > 0 && (
+              <Polyline
+                coordinates={polylineCoordinates}
+                strokeWidth={3}
+                strokeColor="#E16434"
+              />
+            )}
         </MapView>
       </View>
-      <View>
-        <Text style={styles.popularPlacesTitle}>
-          {" "}
-          {popularPlaces.length === 0
-            ? "No popular places nearby. Please increase the radius or search."
-            : "Popular Places"}
-        </Text>
-      </View>
-      <PopularPlacesList />
-      {/* Add your other content here */}
+      {!fromSearchScreen && !searchLocation && (
+        <View>
+          <Text style={styles.popularPlacesTitle}>
+            {" "}
+            {popularPlaces.length === 0
+              ? "No popular places nearby. Please increase the radius or search."
+              : "Popular Places"}
+          </Text>
+        </View>
+      )}
+      {!fromSearchScreen && !searchLocation && <PopularPlacesList />}
+      {fromSearchScreen && searchLocation && <DetailsCard />}
     </View>
   );
 
@@ -366,6 +505,7 @@ const styles = StyleSheet.create({
   navSubtitle: {
     fontSize: 18,
     color: "gray",
+    textAlign: "center",
   },
 
   navBar: {
@@ -393,6 +533,36 @@ const styles = StyleSheet.create({
   profileInitial: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "white",
+  },
+
+  card: {
+    marginTop: 10,
+    borderRadius: 20,
+    height: 150,
+    overflow: "hidden",
+  },
+  bgImage: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardContent: {
+    backgroundColor: "#16b1e9e1",
+    padding: 20,
+    borderRadius: 20,
+    width: "100%",
+    height: "100%",
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "white",
+  },
+  details: {
+    fontSize: 18,
     color: "white",
   },
 });
