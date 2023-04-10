@@ -1,46 +1,399 @@
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
-import { Provider as PaperProvider } from 'react-native-paper';
-import ContactCard from './ContactCard';
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
+import { auth, db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
+import MapView, { Marker } from "react-native-maps";
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from "react-native-popup-menu";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { Picker } from "@react-native-picker/picker";
+import { signOut } from "firebase/auth";
+import * as Location from "expo-location";
+import { getDistanceFromLatLonInKm } from "./Helper Functions/distanceCalc";
 
 const Landing = () => {
-  const contacts = [
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '123-456-7890',
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '098-765-4321',
-    },
-  ];
+  const [name, setName] = useState("");
+  const [navBarHeight, setNavBarHeight] = useState(0);
+  const navigation = useNavigation();
+  const [region, setRegion] = useState(null);
+  const [radius, setRadius] = useState(20000); // Set default radius to 1000 meters
+  const [popularPlaces, setPopularPlaces] = useState([]);
+  const [location, setLocation] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
-  return (
-    <PaperProvider>
-      <SafeAreaView style={styles.container}>
-        <ScrollView>
-          {contacts.map((contact) => (
-            <ContactCard
-              key={contact.id}
-              name={contact.name}
-              email={contact.email}
-              phone={contact.phone}
-            />
+  useEffect(() => {
+    const isUserLoggedIn = async () => {
+      const user = await AsyncStorage.getItem("@storage_Key");
+      if (user != null) {
+        const email = JSON.parse(user)?.email;
+        if (email) {
+          getUserData(email);
+          getNearByPlaces();
+        }
+      } else {
+        navigation.navigate("Login");
+      }
+    };
+    isUserLoggedIn();
+  }, []);
+
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        AsyncStorage.removeItem("@storage_Key");
+        navigation.navigate("Login");
+      })
+      .catch((error) => {});
+  };
+
+  const setMapRegionWithRadius = (latitude, longitude, radiusInMeters) => {
+    const oneDegreeOfLatitudeInMeters = 111.32 * 1000;
+    const oneDegreeOfLongitudeInMeters =
+      111.32 * 1000 * Math.cos(latitude * (Math.PI / 180));
+
+    const latitudeDelta = radiusInMeters / oneDegreeOfLatitudeInMeters;
+    const longitudeDelta = radiusInMeters / oneDegreeOfLongitudeInMeters;
+
+    setRegion({
+      latitude,
+      longitude,
+      latitudeDelta,
+      longitudeDelta,
+    });
+  };
+
+  const updateRadius = (newRadius) => {
+    setRadius(newRadius);
+    if (region) {
+      setMapRegionWithRadius(region.latitude, region.longitude, newRadius);
+      getNearByPlaces(newRadius);
+    }
+  };
+
+  const getNearByPlaces = async (newRadius) => {
+    const currentRadius = newRadius || radius; // Use newRadius if provided, otherwise use the state value
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      setErrorMsg("Permission to access location was denied");
+      return;
+    }
+    const location = await Location.getCurrentPositionAsync({});
+    setLocation(location);
+    const { latitude, longitude } = location.coords;
+    setMapRegionWithRadius(latitude, longitude, currentRadius);
+
+    fetchPopularPlaces(latitude, longitude, currentRadius)
+      .then((places) => {
+        setPopularPlaces(places);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  const fetchPopularPlaces = async (latitude, longitude, radiusInMeters) => {
+    const overpassApiUrl = "https://overpass-api.de/api/interpreter";
+    const query = `[out:json][timeout:25];
+        (
+          node["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
+          way["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
+          relation["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
+        );
+        out center;`;
+
+    const response = await fetch(overpassApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `data=${encodeURIComponent(query)}`,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      const popularPlaces = data.elements.map((element) => {
+        return {
+          id: element.id,
+          type: element.type,
+          lat: element.lat || element.center.lat,
+          lon: element.lon || element.center.lon,
+          tags: element.tags,
+        };
+      });
+      return popularPlaces;
+    } else {
+      throw new Error("Error fetching popular places from Overpass API");
+    }
+  };
+
+  const getUserData = async (user) => {
+    const docRef = doc(db, "users", user);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      setName(docSnap.data().name);
+    } else {
+    }
+  };
+
+  const PopularPlacesList = () => {
+    const colors = ["#159895", "#19376D", "#576CBC", "#A5D7E8"];
+    const { latitude, longitude } = (location && location?.coords) || {
+      latitude: 40.7128,
+      longitude: -74.006,
+    };
+
+    return (
+      <View style={styles.popularPlacesListContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.popularPlacesList}
+        >
+          {popularPlaces.slice(0, 10).map((place, index) => (
+            <View
+              key={place.id}
+              style={[
+                styles.placeCard,
+                {
+                  backgroundColor: colors[index % colors.length],
+                  width: 150,
+                },
+              ]}
+            >
+              <Text style={styles.placeName}>{place.tags.name}</Text>
+              <Text style={styles.placeDistance}>
+                {getDistanceFromLatLonInKm(
+                  latitude,
+                  longitude,
+                  place.lat,
+                  place.lon
+                )}{" "}
+                km
+              </Text>
+            </View>
           ))}
         </ScrollView>
-      </SafeAreaView>
-    </PaperProvider>
+      </View>
+    );
+  };
+
+  const SearchButton = () => <View></View>;
+
+  const HomeScreen = () => (
+    <View style={[styles.container, { paddingTop: navBarHeight + 16 }]}>
+      <View
+        style={styles.navBar}
+        onLayout={(event) => {
+          setNavBarHeight(event.nativeEvent.layout.height);
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.toggleDrawer()}
+          style={styles.menuIcon}
+        >
+          <Image
+            source={{
+              uri: "https://cdn-icons-png.flaticon.com/512/9091/9091429.png",
+            }}
+            style={styles.menuIcon}
+          />
+        </TouchableOpacity>
+        <View style={styles.navContent}>
+          <Text style={styles.navTitle}>Ready to travel?</Text>
+          <Text style={styles.navSubtitle}>{name}</Text>
+        </View>
+        <Menu>
+          <MenuTrigger>
+            <View style={styles.profileCircle}>
+              <Text style={styles.profileInitial}>
+                {name && name.length > 0 ? name[0].toUpperCase() : ""}
+              </Text>
+            </View>
+          </MenuTrigger>
+          <MenuOptions>
+            <MenuOption onSelect={handleLogout}>
+              <Text style={styles.menuOptionText}>Logout</Text>
+            </MenuOption>
+          </MenuOptions>
+        </Menu>
+      </View>
+      <SearchButton />
+      <View style={styles.radiusPickerContainer}>
+        <Text style={styles.radiusPickerLabel}>Radius:</Text>
+        <Picker
+          selectedValue={radius}
+          style={styles.radiusPicker}
+          onValueChange={(itemValue) => updateRadius(itemValue)}
+        >
+          <Picker.Item label="1km" value={1000} />
+          <Picker.Item label="5km" value={5000} />
+          <Picker.Item label="10km" value={10000} />
+          <Picker.Item label="20km" value={20000} />
+          <Picker.Item label="50km" value={50000} />
+          <Picker.Item label="100km" value={100000} />
+          <Picker.Item label="500km" value={500000} />
+        </Picker>
+      </View>
+      <View style={styles.mapContainer}>
+        <MapView style={styles.map} region={region}>
+          {location && (
+            <Marker coordinate={location.coords} title="Selected Location">
+              <Image
+                source={{
+                  uri: "https://cdn-icons-png.flaticon.com/512/1301/1301421.png",
+                }}
+                style={{ width: 30, height: 30 }}
+                resizeMode="contain"
+              />
+            </Marker>
+          )}
+          {popularPlaces.map((place) => (
+            <Marker
+              key={place.id}
+              coordinate={{
+                latitude: place.lat,
+                longitude: place.lon,
+              }}
+              title={place.tags.name}
+            >
+              <Image
+                source={{
+                  uri: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+                }}
+                style={{ width: 30, height: 30 }}
+                resizeMode="contain"
+              />
+            </Marker>
+          ))}
+        </MapView>
+      </View>
+      <View>
+        <Text style={styles.popularPlacesTitle}>
+          {" "}
+          {popularPlaces.length === 0
+            ? "No popular places nearby. Please increase the radius or search."
+            : "Popular Places"}
+        </Text>
+      </View>
+      <PopularPlacesList />
+      {/* Add your other content here */}
+    </View>
   );
+
+  return <HomeScreen />;
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: "white",
+  },
+  mapContainer: {
+    width: "100%",
+    height: "30%",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  map: {
+    flex: 1,
+  },
+  radiusPickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  radiusPickerLabel: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  radiusPicker: {
+    width: 120,
+    height: 40,
+  },
+  popularPlacesTitle: {
+    marginVertical: 10,
+    fontSize: 18,
+  },
+  popularPlacesListContainer: {
+    height: "10%",
+  },
+  popularPlacesList: {
+    flexDirection: "row",
+  },
+  placeCard: {
+    backgroundColor: "#F0F0F0",
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 8,
+  },
+  placeName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+    marginBottom: 4,
+  },
+  placeDistance: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+  },
+  menuOptionText: {
+    fontSize: 16,
+    padding: 8,
+  },
+
+  navContent: {
+    justifyContent: "center",
+  },
+  navSubtitle: {
+    fontSize: 18,
+    color: "gray",
+  },
+
+  navBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  navTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  menuIcon: {
+    width: 30,
+    height: 30,
+  },
+  profileCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#3C3C3C",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileInitial: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
   },
 });
 
