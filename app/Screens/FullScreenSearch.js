@@ -6,6 +6,8 @@ import {
   Image,
   FlatList,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import SearchImage from "../../assets/searchpage/search.png";
@@ -67,7 +69,7 @@ const SearchContainer = ({ navigation }) => {
   };
 
   return (
-    <View>
+    <View style={styles.searchContainer}>
       <View style={styles.searchBarContainer}>
         <TextInput
           style={styles.searchInput}
@@ -84,11 +86,15 @@ const SearchContainer = ({ navigation }) => {
           style={styles.searchIcon}
         />
       </View>
-      <FlatList
-        data={locations}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.place_id}
-      />
+      <View style={{ zIndex: 2 }}>
+        <FlatList
+          style={styles.listContainer}
+          data={locations}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.place_id}
+        />
+      </View>
+      <Image style={styles.ImageContainer} source={SearchImage} />
     </View>
   );
 };
@@ -99,7 +105,6 @@ export default function FullScreenSearch({ navigation }) {
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <SearchContainer navigation={navigation} />
-      <Image style={styles.ImageContainer} source={SearchImage} />
     </View>
   );
 }
@@ -129,105 +134,25 @@ const styles = StyleSheet.create({
     height: 20,
     marginRight: 8,
   },
+  searchContainer: {
+    flex: 1,
+  },
   ImageContainer: {
     resizeMode: "contain",
     width: "90%",
     height: "100%",
     marginHorizontal: 20,
+    position: "absolute",
+    bottom: 0,
+    zIndex: 1,
   },
   locationItem: {
     padding: 8,
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
+  listContainer: {
+    backgroundColor: "white",
+    zIndex: 3,
+  },
 });
-
-// const SettingsScreen = () => {
-//   return (
-//     <View style={styles.container}>
-//       {/* Header */}
-//       <View style={styles.header}>
-//         <TouchableOpacity>
-//           <Ionicons name="arrow-back" size={24} color="black" />
-//         </TouchableOpacity>
-//         <Text style={styles.headerTitle}>Settings</Text>
-//         <View />
-//       </View>
-
-//       {/* Profile Picture */}
-//       <View style={styles.profilePictureContainer}>
-//         <Image
-//           source={require("./path/to/profile/picture.png")}
-//           style={styles.profilePicture}
-//         />
-//       </View>
-
-//       {/* Options */}
-//       <View style={styles.optionsContainer}>
-//         <TouchableOpacity style={styles.option}>
-//           <Ionicons name="log-out" size={24} color="black" />
-//           <Text style={styles.optionTitle}>Logout</Text>
-//         </TouchableOpacity>
-//         <TouchableOpacity style={styles.option}>
-//           <Ionicons name="information-circle" size={24} color="black" />
-//           <Text style={styles.optionTitle}>Info</Text>
-//         </TouchableOpacity>
-//         <TouchableOpacity style={styles.option}>
-//           <Ionicons name="person" size={24} color="black" />
-//           <Text style={styles.optionTitle}>Profile</Text>
-//         </TouchableOpacity>
-//         {/* Add more options here */}
-//       </View>
-//     </View>
-//   );
-// };
-
-// import React from "react";
-// import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-// import { Ionicons } from "@expo/vector-icons"; // assuming you're using Expo
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#fff",
-//   },
-//   header: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     justifyContent: "space-between",
-//     paddingHorizontal: 16,
-//     paddingTop: 16,
-//     paddingBottom: 8,
-//   },
-//   headerTitle: {
-//     fontSize: 20,
-//     fontWeight: "bold",
-//     textAlign: "center",
-//     flex: 1,
-//     marginLeft: -24,
-//   },
-//   profilePictureContainer: {
-//     alignItems: "center",
-//     justifyContent: "center",
-//     marginTop: 32,
-//   },
-//   profilePicture: {
-//     width: 120,
-//     height: 120,
-//     borderRadius: 60,
-//   },
-//   optionsContainer: {
-//     marginTop: 32,
-//   },
-//   option: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     paddingHorizontal: 16,
-//     paddingVertical: 8,
-//   },
-//   optionTitle: {
-//     marginLeft: 16,
-//     fontSize: 16,
-//     fontWeight: "bold",
-//   },
-// });

@@ -1,9 +1,30 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const ProfileView = () => {
+const ProfileView = ({ navigation }) => {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    const isUserLoggedIn = async () => {
+      const user = await AsyncStorage.getItem("@storage_Key");
+      if (user != null) {
+        const email = JSON.parse(user)?.email;
+        setEmail(email);
+        if (email) {
+          getUserData(email);
+        }
+      } else {
+        navigation.navigate("Login");
+      }
+    };
+    isUserLoggedIn();
+  }, []);
   const getUserData = async (user) => {
     const docRef = doc(db, "users", user);
     const docSnap = await getDoc(docRef);
@@ -13,10 +34,22 @@ const ProfileView = () => {
     }
   };
 
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        AsyncStorage.removeItem("@storage_Key");
+        navigation.navigate("Login");
+      })
+      .catch((error) => {});
+  };
+  const handleBack = () => {
+    navigation.navigate("Home");
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <View style={styles.navTitle}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleBack}>
           <Image
             source={{
               uri: "https://cdn-icons-png.flaticon.com/128/2985/2985161.png",
@@ -39,8 +72,9 @@ const ProfileView = () => {
       <View
         style={{
           marginTop: 20,
-          width: 310,
-          height: 100,
+          marginBottom: 10,
+
+          borderColor: "orange",
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -59,180 +93,209 @@ const ProfileView = () => {
           justifyContent: "center",
         }}
       >
-        <Text style={{ fontSize: 25, fontWeight: 800 }}>Profile</Text>
+        <Text style={{ fontSize: 25, fontWeight: 500 }}>
+          {name && name.length > 0 ? name : ""}
+        </Text>
+      </View>
+      <View
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Text style={{ fontSize: 16, fontWeight: 400, color: "gray" }}>
+          {email && email.length > 0 ? email : ""}
+        </Text>
       </View>
 
       <View style={styles.settingContainer}>
-        <View style={styles.settingBox}>
-          <View style={styles.settingBoxInner}>
-            <View
-              style={{
-                width: 55,
-                height: 55,
-                borderRadius: 15,
-                backgroundColor: "hsl(240, 5%, 97%)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/484/484613.png",
+        <TouchableOpacity>
+          <View style={styles.settingBox}>
+            <View style={styles.settingBoxInner}>
+              <View
+                style={{
+                  width: 55,
+                  height: 55,
+                  borderRadius: 15,
+                  backgroundColor: "hsl(240, 5%, 97%)",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-                style={{ width: 35, height: 25 }}
-                resizeMode="contain"
-              />
+              >
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/484/484613.png",
+                  }}
+                  style={{ width: 35, height: 25 }}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.settingInnerBoxText}>Settings</Text>
             </View>
-            <Text style={styles.settingInnerBoxText}>Settings</Text>
-          </View>
-          <View>
-            <TouchableOpacity>
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
-                }}
-                style={{ width: 15, height: 15 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.settingBox}>
-          <View style={styles.settingBoxInner}>
-            <View
-              style={{
-                width: 55,
-                height: 55,
-                borderRadius: 15,
-                backgroundColor: "hsl(240, 5%, 97%)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/484/484613.png",
-                }}
-                style={{ width: 35, height: 25 }}
-                resizeMode="contain"
-              />
+            <View>
+              <TouchableOpacity>
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
+                  }}
+                  style={{ width: 15, height: 15 }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             </View>
-            <Text style={styles.settingInnerBoxText}>Billing Details</Text>
           </View>
-          <View>
-            <TouchableOpacity>
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <View style={styles.settingBox}>
+            <View style={styles.settingBoxInner}>
+              <View
+                style={{
+                  width: 55,
+                  height: 55,
+                  borderRadius: 15,
+                  backgroundColor: "hsl(240, 5%, 97%)",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-                style={{ width: 15, height: 15 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.settingBox}>
-          <View style={styles.settingBoxInner}>
-            <View
-              style={{
-                width: 55,
-                height: 55,
-                borderRadius: 15,
-                backgroundColor: "hsl(240, 5%, 97%)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/456/456212.png",
-                }}
-                style={{ width: 35, height: 25 }}
-                resizeMode="contain"
-              />
+              >
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/484/484613.png",
+                  }}
+                  style={{ width: 35, height: 25 }}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.settingInnerBoxText}>Billing Details</Text>
             </View>
-            <Text style={styles.settingInnerBoxText}>User Management</Text>
-          </View>
-          <View>
-            <TouchableOpacity>
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
-                }}
-                style={{ width: 15, height: 15 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.settingBox}>
-          <View style={styles.settingBoxInner}>
-            <View
-              style={{
-                width: 55,
-                height: 55,
-                borderRadius: 15,
-                backgroundColor: "hsl(240, 5%, 97%)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/545/545674.png",
-                }}
-                style={{ width: 35, height: 25 }}
-                resizeMode="contain"
-              />
+            <View>
+              <TouchableOpacity>
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
+                  }}
+                  style={{ width: 15, height: 15 }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             </View>
-            <Text style={styles.settingInnerBoxText}>Information</Text>
           </View>
-          <View>
-            <TouchableOpacity>
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <View style={styles.settingBox}>
+            <View style={styles.settingBoxInner}>
+              <View
+                style={{
+                  width: 55,
+                  height: 55,
+                  borderRadius: 15,
+                  backgroundColor: "hsl(240, 5%, 97%)",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-                style={{ width: 15, height: 15 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.settingBox}>
-          <View style={styles.settingBoxInner}>
-            <View
-              style={{
-                width: 55,
-                height: 55,
-                borderRadius: 15,
-                backgroundColor: "hsl(240, 5%, 97%)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/8944/8944313.png",
-                }}
-                style={{ width: 35, height: 25 }}
-                resizeMode="contain"
-              />
+              >
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/456/456212.png",
+                  }}
+                  style={{ width: 35, height: 25 }}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.settingInnerBoxText}>User Management</Text>
             </View>
-            <Text style={styles.settingInnerBoxText}>Log Out</Text>
+            <View>
+              <TouchableOpacity>
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
+                  }}
+                  style={{ width: 15, height: 15 }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-          <View>
-            <TouchableOpacity>
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <View style={styles.settingBox}>
+            <View style={styles.settingBoxInner}>
+              <View
+                style={{
+                  width: 55,
+                  height: 55,
+                  borderRadius: 15,
+                  backgroundColor: "hsl(240, 5%, 97%)",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-                style={{ width: 15, height: 15 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+              >
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/545/545674.png",
+                  }}
+                  style={{ width: 35, height: 25 }}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.settingInnerBoxText}>Information</Text>
+            </View>
+            <View>
+              <TouchableOpacity>
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
+                  }}
+                  style={{ width: 15, height: 15 }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleLogout}>
+          <View style={styles.settingBox}>
+            <View style={styles.settingBoxInner}>
+              <View
+                style={{
+                  width: 55,
+                  height: 55,
+                  borderRadius: 15,
+                  backgroundColor: "hsl(240, 5%, 97%)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/8944/8944313.png",
+                  }}
+                  style={{ width: 35, height: 25 }}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.settingInnerBoxText}>Log Out</Text>
+            </View>
+            <View>
+              <TouchableOpacity>
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/128/271/271228.png",
+                  }}
+                  style={{ width: 15, height: 15 }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </View>
+      <View style={{ marginTop: 20 }}>
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          Privacy & Policy
+        </Text>
+        <Text style={{ textAlign: "center", marginTop: 10 }}>Terms Of Use</Text>
+        <Text style={{ textAlign: "center", marginTop: 10 }}>Contact Us</Text>
       </View>
     </View>
   );
@@ -266,8 +329,6 @@ const styles = StyleSheet.create({
     lineHeight: 60,
   },
   profileCircleOuter: {
-    width: 80,
-    height: 80,
     borderRadius: 40,
     borderWidth: 2,
     borderColor: "#EFEEF6",
@@ -276,10 +337,9 @@ const styles = StyleSheet.create({
   },
   settingContainer: {
     marginTop: 30,
-    width: 310,
     height: 500,
     backgroundColor: "white",
-    borderRadius: 30,
+    borderRadius: 10,
     flexDirection: "column",
     justifyContent: "space-around",
   },

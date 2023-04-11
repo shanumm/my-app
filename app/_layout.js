@@ -8,6 +8,7 @@ import LocationComponent from "./Location";
 import AuthLoading from "./AuthLoading";
 import ProfileView from "./ProfileView";
 import FullScreenSearch from "./Screens/FullScreenSearch";
+import CreateDestination from "./Screens/CreateDestination";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -61,6 +62,11 @@ const Layout = () => {
       <Stack.Screen
         name="SearchComponent"
         component={FullScreenSearch}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreateDestination"
+        component={CreateDestination}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

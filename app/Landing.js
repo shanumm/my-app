@@ -26,6 +26,8 @@ import { signOut } from "firebase/auth";
 import * as Location from "expo-location";
 import { getDistanceFromLatLonInKm } from "./Helper Functions/distanceCalc";
 import SearchBar from "./SearchBar";
+import LandingCardImg from "../assets/landingpage/landing_card.png";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Landing = ({ route }) => {
   const [name, setName] = useState("");
@@ -40,6 +42,11 @@ const Landing = ({ route }) => {
   const [mapRef, setMapRef] = useState(null);
   const [polylineCoordinates, setPolylineCoordinates] = useState([]);
   const [initialTripDetails, setInitialTripDetails] = useState(null);
+
+  const insets = useSafeAreaInsets();
+
+  const imgUrl =
+    "https://img.freepik.com/free-vector/geometric-pattern-navy-background_78370-653.jpg?w=900&t=st=1681144442~exp=1681145042~hmac=5ad96dca74ab893328a8b0cea168990715f1ee19e57a33e310fbc27e63406cc6";
 
   useEffect(() => {
     const isUserLoggedIn = async () => {
@@ -269,6 +276,10 @@ const Landing = ({ route }) => {
     );
   };
 
+  const handleCardClick = (url) => {
+    navigation.navigate(url);
+  };
+
   const DetailsCard = () => {
     if (initialTripDetails) {
       const distanceInKm = initialTripDetails?.routes[0]?.distance / 1000 || 1;
@@ -306,7 +317,7 @@ const Landing = ({ route }) => {
   };
 
   const HomeScreen = () => (
-    <View style={[styles.container, { paddingTop: navBarHeight + 16 }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <View
         style={styles.navBar}
         onLayout={(event) => {
@@ -328,20 +339,26 @@ const Landing = ({ route }) => {
           <Text style={styles.navTitle}>Ready to travel?</Text>
           <Text style={styles.navSubtitle}>{name}</Text>
         </View>
-        <Menu>
-          <MenuTrigger>
-            <View style={styles.profileCircle}>
-              <Text style={styles.profileInitial}>
-                {name && name.length > 0 ? name[0].toUpperCase() : ""}
-              </Text>
-            </View>
-          </MenuTrigger>
+        {/* <Menu>
+          <MenuTrigger> */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate("ProfileView")}
+          style={styles.menuIcon}
+        >
+          <View style={styles.profileCircle}>
+            <Text style={styles.profileInitial}>
+              {name && name.length > 0 ? name[0].toUpperCase() : ""}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* </MenuTrigger>
           <MenuOptions>
             <MenuOption onSelect={handleLogout}>
               <Text style={styles.menuOptionText}>Logout</Text>
             </MenuOption>
           </MenuOptions>
-        </Menu>
+        </Menu> */}
       </View>
       <SearchBar fromLanding={true} />
       <View style={styles.radiusPickerContainer}>
@@ -402,7 +419,7 @@ const Landing = ({ route }) => {
               >
                 <Image
                   source={{
-                    uri: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+                    uri: "https://cdn-icons-png.flaticon.com/512/6153/6153497.png",
                   }}
                   style={{ width: 30, height: 30 }}
                   resizeMode="contain"
@@ -432,6 +449,64 @@ const Landing = ({ route }) => {
       )}
       {!fromSearchScreen && !searchLocation && <PopularPlacesList />}
       {fromSearchScreen && searchLocation && <DetailsCard />}
+      <View style={styles.createCardsContainer}>
+        <TouchableOpacity
+          style={styles.createCard1}
+          onPress={() => handleCardClick("CreateDestination")}
+        >
+          <Image
+            source={LandingCardImg}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+          />
+          <View style={styles.overlay} />
+          <Text style={styles.createCardText}>Create Destination</Text>
+          <Text style={styles.createCardSubText}>
+            Choose a location and invite people to join
+          </Text>
+        </TouchableOpacity>
+        <ImageBackground
+          source={{
+            uri: imgUrl,
+          }}
+          style={styles.createCard2}
+          resizeMode="cover"
+        >
+          <Text style={styles.createCardText}>All Requests</Text>
+          <Text style={styles.createCardSubText}>
+            See all invitations from other travelers
+          </Text>
+        </ImageBackground>
+      </View>
+
+      <View style={styles.createCardsContainer}>
+        <ImageBackground
+          source={{
+            uri: imgUrl,
+          }}
+          style={styles.createCard1}
+          resizeMode="cover"
+        >
+          <Text style={styles.createCardText}>History</Text>
+          <Text style={styles.createCardSubText}>
+            {" "}
+            Review your past travel experiences
+          </Text>
+        </ImageBackground>
+        <View style={styles.createCard1}>
+          <Image
+            source={LandingCardImg}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+          />
+          <View style={styles.overlay} />
+
+          <Text style={styles.createCardText}>Ongoing Journey</Text>
+          <Text style={styles.createCardSubText}>
+            Keep track of your current group travels
+          </Text>
+        </View>
+      </View>
     </View>
   );
 
@@ -564,6 +639,59 @@ const styles = StyleSheet.create({
   details: {
     fontSize: 18,
     color: "white",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.812)",
+  },
+  createCardsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+    flex: 1,
+  },
+  createCard1: {
+    flex: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginRight: 8,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backgroundImage: {
+    position: "absolute",
+    width: "110%",
+    height: "110%",
+    transform: [{ rotate: "10deg" }],
+  },
+  createCard2: {
+    flex: 1,
+    borderRadius: 8,
+    padding: 16,
+    marginLeft: 8,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  createCardText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
+  },
+
+  createCardSubText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#afafaf",
+    marginTop: 8,
+    textAlign: "center",
   },
 });
 
