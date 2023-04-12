@@ -9,6 +9,7 @@ import AuthLoading from "./AuthLoading";
 import ProfileView from "./ProfileView";
 import FullScreenSearch from "./Screens/FullScreenSearch";
 import CreateDestination from "./Screens/CreateDestination";
+import History from "./History";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -29,7 +30,7 @@ const HomeNavigator = () => {
 const Layout = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen
+      {/* <Stack.Screen
         name="AuthLoading"
         component={AuthLoading}
         options={{ headerShown: false }}
@@ -67,6 +68,11 @@ const Layout = () => {
       <Stack.Screen
         name="CreateDestination"
         component={CreateDestination}
+        options={{ headerShown: false }}
+      /> */}
+      <Stack.Screen
+        name="history"
+        component={History}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
