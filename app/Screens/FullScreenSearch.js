@@ -57,7 +57,6 @@ const SearchContainer = ({ navigation, route }) => {
   const handleItemPress = (item) => {
     setSelectedItem(item);
   };
-
   useEffect(() => {
     if (selectedItem) {
       console.log(selectedItem, fromDestination, ">>> d");
@@ -81,7 +80,14 @@ const SearchContainer = ({ navigation, route }) => {
     return (
       <TouchableOpacity onPress={() => handleItemPress(item)}>
         <View style={styles.locationItem}>
-          <Text>{item.display_name}</Text>
+          <View style={styles.locationInfo}>
+            <Text style={styles.locationName}>{item.display_name}</Text>
+            <Text style={styles.locationAddress}>
+              {item.address?.city}, {item.address?.state},{" "}
+              {item.address?.country}
+            </Text>
+          </View>
+          <Text style={styles.locationDistance}>{item.distance} km</Text>
         </View>
       </TouchableOpacity>
     );
@@ -166,9 +172,29 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   locationItem: {
-    padding: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
     borderBottomWidth: 1,
     borderColor: "#eee",
+  },
+  locationInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  locationName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  locationAddress: {
+    fontSize: 14,
+    color: "#999",
+  },
+  locationDistance: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   listContainer: {
     backgroundColor: "white",
