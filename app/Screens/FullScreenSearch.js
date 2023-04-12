@@ -14,10 +14,11 @@ import SearchImage from "../../assets/searchpage/search.png";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import axios from "axios";
 
-const SearchContainer = ({ navigation }) => {
+const SearchContainer = ({ navigation, route }) => {
   const [inputValue, setInputValue] = useState("");
   const [locations, setLocations] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [fromDestination, setFromDestination] = useState("");
 
   useEffect(() => {
     if (inputValue.length > 3) {
@@ -26,6 +27,15 @@ const SearchContainer = ({ navigation }) => {
       setLocations([]);
     }
   }, [inputValue]);
+
+  useEffect(() => {
+    if (
+      route.params?.fromDestination &&
+      route.params?.fromDestination.length > 0
+    ) {
+      setFromDestination(route.params?.fromDestination);
+    }
+  }, [route]);
 
   const searchLocations = async (query) => {
     try {
@@ -49,11 +59,20 @@ const SearchContainer = ({ navigation }) => {
   };
   useEffect(() => {
     if (selectedItem) {
-      navigation.navigate("Home", {
-        selectedItem,
-        key: selectedItem.place_id,
-        fromSearchScreen: true,
-      });
+      console.log(selectedItem, fromDestination, ">>> d");
+      if (!fromDestination.length)
+        navigation.navigate("Home", {
+          selectedItem,
+          key: selectedItem.place_id,
+          fromSearchScreen: true,
+        });
+      else {
+        navigation.navigate(fromDestination, {
+          selectedItem,
+          key: selectedItem.place_id,
+          fromSearchScreen: true,
+        });
+      }
     }
   }, [selectedItem]);
 
@@ -105,12 +124,12 @@ const SearchContainer = ({ navigation }) => {
   );
 };
 
-export default function FullScreenSearch({ navigation }) {
+export default function FullScreenSearch({ navigation, route }) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-      <SearchContainer navigation={navigation} />
+      <SearchContainer navigation={navigation} route={route} />
     </View>
   );
 }
