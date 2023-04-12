@@ -277,7 +277,9 @@ const Landing = ({ route }) => {
   };
 
   const handleCardClick = (url) => {
-    navigation.navigate(url);
+    if (url === "CreateDestination")
+      navigation.navigate(url, { searchLocation, fromLandingPage: true });
+    // {searchLocation.display_name || "Test"}
   };
 
   const DetailsCard = () => {

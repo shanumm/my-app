@@ -9,6 +9,7 @@ import AuthLoading from "./AuthLoading";
 import ProfileView from "./ProfileView";
 import FullScreenSearch from "./Screens/FullScreenSearch";
 import CreateDestination from "./Screens/CreateDestination";
+import InvitePeople from "./Screens/InvitePeople";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -67,6 +68,11 @@ const Layout = () => {
       <Stack.Screen
         name="CreateDestination"
         component={CreateDestination}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="InvitePeople"
+        component={InvitePeople}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
