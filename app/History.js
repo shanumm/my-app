@@ -7,7 +7,7 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
-import Carousel from "react-native-snap-carousel";
+// import Carousel from "react-native-snap-carousel";
 import React, { useEffect, useState, Component } from "react";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -58,16 +58,24 @@ const History = ({ navigation }) => {
   const { width: viewportWidth } = Dimensions.get("window");
 
   const images = [
-    "https://example.com/image1.jpg",
-    "https://example.com/image2.jpg",
-    "https://example.com/image3.jpg",
+    "https://cdn.pixabay.com/photo/2019/04/26/17/47/color-4158152_960_720.jpg",
+    "https://cdn.pixabay.com/photo/2019/04/26/17/47/color-4158152_960_720.jpg",
+    "https://cdn.pixabay.com/photo/2019/04/26/17/47/color-4158152_960_720.jpg",
   ];
+
+  const _renderItem = ({ item, index }) => {
+    return (
+      <View style={styles.slide}>
+        <Image source={{ uri: item }} style={styles.image} />
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={{ flex: 1 }}>
       <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
         <View style={styles.navTitle}>
-          <Text style={{ fontSize: 25, fontWeight: 800 }}>My History List</Text>
+          <Text style={{ fontSize: 25, fontWeight: 700 }}>History</Text>
           <TouchableOpacity onPress={handleBack}>
             <Image
               source={{
@@ -80,15 +88,17 @@ const History = ({ navigation }) => {
         </View>
         <View style={styles.historycontainer}>
           <Text style={styles.historytitle}>Recent List</Text>
-          <Carousel
-            data={images}
-            renderItem={this._renderItem}
-            sliderWidth={viewportWidth}
-            itemWidth={viewportWidth}
-            layout={"default"}
-            loop={true}
-            autoplay={true}
-          />
+          <View style={styles.recentListContainer}>
+            {/* <Carousel
+              data={images}
+              renderItem={_renderItem}
+              sliderWidth={viewportWidth}
+              itemWidth={viewportWidth}
+              layout={"default"}
+              loop={true}
+              autoplay={true}
+            /> */}
+          </View>
         </View>
         <View style={styles.settingContainer}>
           <TouchableOpacity>
@@ -106,13 +116,13 @@ const History = ({ navigation }) => {
                 >
                   <Image
                     source={{
-                      uri: "https://cdn-icons-png.flaticon.com/128/484/484613.png",
+                      uri: "https://cdn-icons-png.flaticon.com/512/2831/2831972.png",
                     }}
-                    style={{ width: 35, height: 25 }}
+                    style={{ width: 45, height: 35 }}
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={styles.settingInnerBoxText}>Settings</Text>
+                <Text style={styles.settingInnerBoxText}>Journey</Text>
               </View>
               <View>
                 <TouchableOpacity>
@@ -142,13 +152,13 @@ const History = ({ navigation }) => {
                 >
                   <Image
                     source={{
-                      uri: "https://cdn-icons-png.flaticon.com/128/484/484613.png",
+                      uri: "https://cdn-icons-png.flaticon.com/512/2831/2831972.png",
                     }}
-                    style={{ width: 35, height: 25 }}
+                    style={{ width: 45, height: 35 }}
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={styles.settingInnerBoxText}>Billing Details</Text>
+                <Text style={styles.settingInnerBoxText}>Journey</Text>
               </View>
               <View>
                 <TouchableOpacity>
@@ -178,13 +188,13 @@ const History = ({ navigation }) => {
                 >
                   <Image
                     source={{
-                      uri: "https://cdn-icons-png.flaticon.com/128/456/456212.png",
+                      uri: "https://cdn-icons-png.flaticon.com/512/2831/2831972.png",
                     }}
-                    style={{ width: 35, height: 25 }}
+                    style={{ width: 45, height: 35 }}
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={styles.settingInnerBoxText}>User Management</Text>
+                <Text style={styles.settingInnerBoxText}>Journey</Text>
               </View>
               <View>
                 <TouchableOpacity>
@@ -214,13 +224,13 @@ const History = ({ navigation }) => {
                 >
                   <Image
                     source={{
-                      uri: "https://cdn-icons-png.flaticon.com/128/545/545674.png",
+                      uri: "https://cdn-icons-png.flaticon.com/512/2831/2831972.png",
                     }}
-                    style={{ width: 35, height: 25 }}
+                    style={{ width: 45, height: 35 }}
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={styles.settingInnerBoxText}>Information</Text>
+                <Text style={styles.settingInnerBoxText}>Journey</Text>
               </View>
               <View>
                 <TouchableOpacity>
@@ -250,13 +260,13 @@ const History = ({ navigation }) => {
                 >
                   <Image
                     source={{
-                      uri: "https://cdn-icons-png.flaticon.com/128/8944/8944313.png",
+                      uri: "https://cdn-icons-png.flaticon.com/512/2831/2831972.png",
                     }}
-                    style={{ width: 35, height: 25 }}
+                    style={{ width: 45, height: 35 }}
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={styles.settingInnerBoxText}>Log Out</Text>
+                <Text style={styles.settingInnerBoxText}>Journey</Text>
               </View>
               <View>
                 <TouchableOpacity>
@@ -340,17 +350,12 @@ const styles = StyleSheet.create({
     width: 150,
     textAlign: "left",
   },
-  historycontainer: {
-    marginTop: 20,
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   historytitle: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: 400,
     marginBottom: 16,
+    marginTop: 32,
   },
   slide: {
     flex: 1,
@@ -361,6 +366,11 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 200,
     resizeMode: "cover",
+    borderRadius: 10,
+  },
+  recentListContainer: {
+    borderRadius: 10,
+    overflow: "hidden",
   },
 });
 

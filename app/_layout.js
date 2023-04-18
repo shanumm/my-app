@@ -31,16 +31,17 @@ const HomeNavigator = () => {
 const Layout = () => {
   return (
     <Stack.Navigator>
-      {/* <Stack.Screen
+      <Stack.Screen
         name="AuthLoading"
         component={AuthLoading}
         options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Onboard"
-        component={(props) => <Onboard {...props} />}
         options={{ headerShown: false }}
-      />
+      >
+        {(props) => <Onboard {...props} />}
+      </Stack.Screen>
       <Stack.Screen
         name="Login"
         component={Login}
@@ -70,9 +71,9 @@ const Layout = () => {
         name="CreateDestination"
         component={CreateDestination}
         options={{ headerShown: false }}
-      /> */}
+      />
       <Stack.Screen
-        name="history"
+        name="History"
         component={History}
         options={{ headerShown: false }}
       />

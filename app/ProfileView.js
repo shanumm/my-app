@@ -7,10 +7,11 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { signOut } from "firebase/auth";
 
 const ProfileView = ({ navigation }) => {
   const [name, setName] = useState("");

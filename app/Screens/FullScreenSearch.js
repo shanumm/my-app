@@ -77,17 +77,13 @@ const SearchContainer = ({ navigation, route }) => {
   }, [selectedItem]);
 
   const renderItem = ({ item }) => {
+    console.log(item);
     return (
       <TouchableOpacity onPress={() => handleItemPress(item)}>
         <View style={styles.locationItem}>
           <View style={styles.locationInfo}>
             <Text style={styles.locationName}>{item.display_name}</Text>
-            <Text style={styles.locationAddress}>
-              {item.address?.city}, {item.address?.state},{" "}
-              {item.address?.country}
-            </Text>
           </View>
-          <Text style={styles.locationDistance}>{item.distance} km</Text>
         </View>
       </TouchableOpacity>
     );

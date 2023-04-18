@@ -280,6 +280,9 @@ const Landing = ({ route }) => {
     if (url === "CreateDestination")
       navigation.navigate(url, { searchLocation, fromLandingPage: true });
     // {searchLocation.display_name || "Test"}
+    else {
+      navigation.navigate(url);
+    }
   };
 
   const DetailsCard = () => {
@@ -467,47 +470,58 @@ const Landing = ({ route }) => {
             Choose a location and invite people to join
           </Text>
         </TouchableOpacity>
-        <ImageBackground
-          source={{
-            uri: imgUrl,
-          }}
-          style={styles.createCard2}
-          resizeMode="cover"
+        <TouchableOpacity
+          style={styles.createCard1}
+          onPress={() => handleCardClick("AllRequests")}
         >
+          <Image
+            source={{
+              uri: "https://cdn.pixabay.com/photo/2017/03/25/17/55/colorful-2174045_960_720.png",
+            }}
+            style={styles.backgroundImageAlternative}
+            resizeMode="cover"
+          />
+          <View style={styles.overlay} />
           <Text style={styles.createCardText}>All Requests</Text>
           <Text style={styles.createCardSubText}>
             See all invitations from other travelers
           </Text>
-        </ImageBackground>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.createCardsContainer}>
-        <ImageBackground
-          source={{
-            uri: imgUrl,
-          }}
-          style={styles.createCard1}
-          resizeMode="cover"
+        <TouchableOpacity
+          style={[styles.createCard1, { marginLeft: 8 }]}
+          onPress={() => handleCardClick("History")}
         >
+          <Image
+            source={{
+              uri: "https://cdn.pixabay.com/photo/2017/03/25/17/55/colorful-2174045_960_720.png",
+            }}
+            style={styles.backgroundImageAlternative}
+            resizeMode="cover"
+          />
+          <View style={styles.overlay} />
           <Text style={styles.createCardText}>History</Text>
           <Text style={styles.createCardSubText}>
-            {" "}
             Review your past travel experiences
           </Text>
-        </ImageBackground>
-        <View style={styles.createCard1}>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.createCard1, { marginLeft: 8 }]}
+          onPress={() => handleCardClick("OngoingJourney")}
+        >
           <Image
             source={LandingCardImg}
             style={styles.backgroundImage}
             resizeMode="cover"
           />
           <View style={styles.overlay} />
-
           <Text style={styles.createCardText}>Ongoing Journey</Text>
           <Text style={styles.createCardSubText}>
             Keep track of your current group travels
           </Text>
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -521,6 +535,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "white",
   },
+
   mapContainer: {
     width: "100%",
     height: "30%",
@@ -656,6 +671,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     flex: 1,
   },
+  createCardWrapper: {
+    flex: 1,
+    justifyContent: "center",
+
+    alignItems: "center",
+  },
   createCard1: {
     flex: 1,
     borderRadius: 8,
@@ -670,6 +691,11 @@ const styles = StyleSheet.create({
     width: "110%",
     height: "110%",
     transform: [{ rotate: "10deg" }],
+  },
+  backgroundImageAlternative: {
+    position: "absolute",
+    width: "150%",
+    height: "150%",
   },
   createCard2: {
     flex: 1,
