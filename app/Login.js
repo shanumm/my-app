@@ -19,7 +19,7 @@ import {
   GoogleAuthProvider,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { arrayUnion, doc, setDoc } from "firebase/firestore";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -35,7 +35,6 @@ const Login = () => {
   const navigation = useNavigation();
 
   const saveUserData = async (user) => {
-    console.log(user, ">>>>>");
     try {
       await AsyncStorage.setItem(
         "@storage_Key",
@@ -58,7 +57,6 @@ const Login = () => {
 
           saveUserData(userCredential);
           const user = userCredential.user;
-          console.log("User logged in:", user);
           setIsloading(false);
           navigation.navigate("Location");
         })
@@ -76,7 +74,14 @@ const Login = () => {
             name,
             email,
             phoneNumber,
+            isOngoingJourney: false,
           });
+          const registeredUsers = doc(db, "registeredUsers", "Numbers");
+          await setDoc(
+            registeredUsers,
+            { numbers: arrayUnion(phoneNumber) },
+            { merge: true }
+          );
           saveUserData(userCredential);
           const user = userCredential.user;
           setIsloading(false);

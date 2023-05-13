@@ -1,16 +1,13 @@
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TextInput,
   Image,
-  FlatList,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  Keyboard,
+  SectionList,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import SearchImage from "../../assets/searchpage/search.png";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import axios from "axios";
 
@@ -40,10 +37,9 @@ const SearchContainer = ({ navigation, route }) => {
   const searchLocations = async (query) => {
     try {
       const response = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}*+India&countrycodes=in&limit=10`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}*+India&countrycodes=in&limit=5`
       );
 
-      console.log(response.data);
       setLocations(response.data);
     } catch (error) {
       console.error(error);
@@ -57,16 +53,16 @@ const SearchContainer = ({ navigation, route }) => {
   const handleItemPress = (item) => {
     setSelectedItem(item);
   };
+
   useEffect(() => {
     if (selectedItem) {
-      console.log(selectedItem, fromDestination, ">>> d");
-      if (!fromDestination.length)
+      if (!fromDestination.length) {
         navigation.navigate("Home", {
           selectedItem,
           key: selectedItem.place_id,
           fromSearchScreen: true,
         });
-      else {
+      } else {
         navigation.navigate(fromDestination, {
           selectedItem,
           key: selectedItem.place_id,
@@ -77,7 +73,6 @@ const SearchContainer = ({ navigation, route }) => {
   }, [selectedItem]);
 
   const renderItem = ({ item }) => {
-    console.log(item);
     return (
       <TouchableOpacity onPress={() => handleItemPress(item)}>
         <View style={styles.locationItem}>
@@ -107,15 +102,19 @@ const SearchContainer = ({ navigation, route }) => {
           style={styles.searchIcon}
         />
       </View>
-      <View style={{ zIndex: 2 }}>
-        <FlatList
-          style={styles.listContainer}
-          data={locations}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.place_id}
-        />
-      </View>
-      <Image style={styles.ImageContainer} source={SearchImage} />
+      <SectionList
+        keyboardShouldPersistTaps="always"
+        style={styles.listContainer}
+        sections={[{ data: locations }]}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.place_id}
+        ListFooterComponent={
+          <Image
+            style={styles.ImageContainer}
+            source={require("../../assets/searchpage/search.png")}
+          />
+        }
+      />
     </View>
   );
 };
@@ -129,7 +128,6 @@ export default function FullScreenSearch({ navigation, route }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

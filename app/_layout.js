@@ -11,6 +11,7 @@ import FullScreenSearch from "./Screens/FullScreenSearch";
 import CreateDestination from "./Screens/CreateDestination";
 import History from "./History";
 import InvitePeople from "./Screens/InvitePeople";
+import OngoingJourney from "./OngoingJourney";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -36,10 +37,7 @@ const Layout = () => {
         component={AuthLoading}
         options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="Onboard"
-        options={{ headerShown: false }}
-      >
+      <Stack.Screen name="Onboard" options={{ headerShown: false }}>
         {(props) => <Onboard {...props} />}
       </Stack.Screen>
       <Stack.Screen
@@ -75,6 +73,11 @@ const Layout = () => {
       <Stack.Screen
         name="History"
         component={History}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="OngoingJourney"
+        component={OngoingJourney}
         options={{ headerShown: false }}
       />
       <Stack.Screen

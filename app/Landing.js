@@ -188,16 +188,15 @@ const Landing = ({ route }) => {
         console.error(error);
       });
   };
-
   const fetchPopularPlaces = async (latitude, longitude, radiusInMeters) => {
     const overpassApiUrl = "https://overpass-api.de/api/interpreter";
     const query = `[out:json][timeout:25];
-        (
-          node["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
-          way["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
-          relation["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
-        );
-        out center;`;
+      (
+        node["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
+        way["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
+        relation["tourism"="attraction"](around:${radiusInMeters},${latitude},${longitude});
+      );
+      out center qt 20;`;
 
     const response = await fetch(overpassApiUrl, {
       method: "POST",
@@ -322,207 +321,213 @@ const Landing = ({ route }) => {
   };
 
   const HomeScreen = () => (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-      <View
-        style={styles.navBar}
-        onLayout={(event) => {
-          setNavBarHeight(event.nativeEvent.layout.height);
-        }}
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={[styles.container, { paddingTop: insets.top + 16 }, { flex: 1 }]}
+        contentContainerStyle={{ flexGrow: 1 }}
       >
-        <TouchableOpacity
-          onPress={() => navigation.toggleDrawer()}
-          style={styles.menuIcon}
+        <View
+          style={styles.navBar}
+          onLayout={(event) => {
+            setNavBarHeight(event.nativeEvent.layout.height);
+          }}
         >
-          <Image
-            source={{
-              uri: "https://cdn-icons-png.flaticon.com/512/9091/9091429.png",
-            }}
+          <TouchableOpacity
+            onPress={() => navigation.toggleDrawer()}
             style={styles.menuIcon}
-          />
-        </TouchableOpacity>
-        <View style={styles.navContent}>
-          <Text style={styles.navTitle}>Ready to travel?</Text>
-          <Text style={styles.navSubtitle}>{name}</Text>
-        </View>
-        {/* <Menu>
-          <MenuTrigger> */}
-        <TouchableOpacity
-          onPress={() => navigation.navigate("ProfileView")}
-          style={styles.menuIcon}
-        >
-          <View style={styles.profileCircle}>
-            <Text style={styles.profileInitial}>
-              {name && name.length > 0 ? name[0].toUpperCase() : ""}
-            </Text>
+          >
+            <Image
+              source={{
+                uri: "https://cdn-icons-png.flaticon.com/512/9091/9091429.png",
+              }}
+              style={styles.menuIcon}
+            />
+          </TouchableOpacity>
+          <View style={styles.navContent}>
+            <Text style={styles.navTitle}>Ready to travel?</Text>
+            <Text style={styles.navSubtitle}>{name}</Text>
           </View>
-        </TouchableOpacity>
+          {/* <Menu>
+          <MenuTrigger> */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate("ProfileView")}
+            style={styles.menuIcon}
+          >
+            <View style={styles.profileCircle}>
+              <Text style={styles.profileInitial}>
+                {name && name.length > 0 ? name[0].toUpperCase() : ""}
+              </Text>
+            </View>
+          </TouchableOpacity>
 
-        {/* </MenuTrigger>
+          {/* </MenuTrigger>
           <MenuOptions>
             <MenuOption onSelect={handleLogout}>
               <Text style={styles.menuOptionText}>Logout</Text>
             </MenuOption>
           </MenuOptions>
         </Menu> */}
-      </View>
-      <SearchBar fromLanding={true} />
-      <View style={styles.radiusPickerContainer}>
-        <Text style={styles.radiusPickerLabel}>Radius:</Text>
-        <Picker
-          selectedValue={radius}
-          style={styles.radiusPicker}
-          onValueChange={(itemValue) => updateRadius(itemValue)}
-        >
-          <Picker.Item label="1km" value={1000} />
-          <Picker.Item label="5km" value={5000} />
-          <Picker.Item label="10km" value={10000} />
-          <Picker.Item label="20km" value={20000} />
-          <Picker.Item label="50km" value={50000} />
-          <Picker.Item label="100km" value={100000} />
-          <Picker.Item label="500km" value={500000} />
-        </Picker>
-      </View>
-      <View style={styles.mapContainer}>
-        <MapView style={styles.map} region={region} ref={mapRef}>
-          {location && (
-            <Marker coordinate={location.coords} title="Selected Location">
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/512/1301/1301421.png",
-                }}
-                style={{ width: 30, height: 30 }}
-                resizeMode="contain"
-              />
-            </Marker>
-          )}
-          {fromSearchScreen && searchLocation && (
-            <Marker
-              coordinate={{
-                latitude: parseFloat(searchLocation.lat),
-                longitude: parseFloat(searchLocation.lon),
-              }}
-              title={searchLocation.name}
-            >
-              <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-                }}
-                style={{ width: 30, height: 30 }}
-                resizeMode="contain"
-              />
-            </Marker>
-          )}
-          {!searchLocation &&
-            popularPlaces.map((place) => (
-              <Marker
-                key={place.id}
-                coordinate={{
-                  latitude: place.lat,
-                  longitude: place.lon,
-                }}
-                title={place.tags.name}
-              >
+        </View>
+        <SearchBar fromLanding={true} />
+        <View style={styles.radiusPickerContainer}>
+          <Text style={styles.radiusPickerLabel}>Radius:</Text>
+          <Picker
+            selectedValue={radius}
+            style={styles.radiusPicker}
+            onValueChange={(itemValue) => updateRadius(itemValue)}
+          >
+            <Picker.Item label="1km" value={1000} />
+            <Picker.Item label="5km" value={5000} />
+            <Picker.Item label="10km" value={10000} />
+            <Picker.Item label="20km" value={20000} />
+            <Picker.Item label="50km" value={50000} />
+            <Picker.Item label="100km" value={100000} />
+            <Picker.Item label="500km" value={500000} />
+          </Picker>
+        </View>
+        <View style={styles.mapContainer}>
+          <MapView style={styles.map} region={region} ref={mapRef}>
+            {location && (
+              <Marker coordinate={location.coords} title="Selected Location">
                 <Image
                   source={{
-                    uri: "https://cdn-icons-png.flaticon.com/512/6153/6153497.png",
+                    uri: "https://cdn-icons-png.flaticon.com/512/1301/1301421.png",
                   }}
                   style={{ width: 30, height: 30 }}
                   resizeMode="contain"
                 />
               </Marker>
-            ))}
-          {fromSearchScreen &&
-            searchLocation &&
-            polylineCoordinates.length > 0 && (
-              <Polyline
-                coordinates={polylineCoordinates}
-                strokeWidth={3}
-                strokeColor="#E16434"
-              />
             )}
-        </MapView>
-      </View>
-      {!fromSearchScreen && !searchLocation && (
-        <View>
-          <Text style={styles.popularPlacesTitle}>
-            {" "}
-            {popularPlaces.length === 0
-              ? "No popular places nearby. Please increase the radius or search."
-              : "Popular Places"}
-          </Text>
+            {fromSearchScreen && searchLocation && (
+              <Marker
+                coordinate={{
+                  latitude: parseFloat(searchLocation.lat),
+                  longitude: parseFloat(searchLocation.lon),
+                }}
+                title={searchLocation.name}
+              >
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+                  }}
+                  style={{ width: 30, height: 30 }}
+                  resizeMode="contain"
+                />
+              </Marker>
+            )}
+            {!searchLocation &&
+              popularPlaces.map((place) => (
+                <Marker
+                  key={place.id}
+                  coordinate={{
+                    latitude: place.lat,
+                    longitude: place.lon,
+                  }}
+                  title={place.tags.name}
+                >
+                  <Image
+                    source={{
+                      uri: "https://cdn-icons-png.flaticon.com/512/6153/6153497.png",
+                    }}
+                    style={{ width: 30, height: 30 }}
+                    resizeMode="contain"
+                  />
+                </Marker>
+              ))}
+            {fromSearchScreen &&
+              searchLocation &&
+              polylineCoordinates.length > 0 && (
+                <Polyline
+                  coordinates={polylineCoordinates}
+                  strokeWidth={3}
+                  strokeColor="#E16434"
+                />
+              )}
+          </MapView>
         </View>
-      )}
-      {!fromSearchScreen && !searchLocation && <PopularPlacesList />}
-      {fromSearchScreen && searchLocation && <DetailsCard />}
-      <View style={styles.createCardsContainer}>
-        <TouchableOpacity
-          style={styles.createCard1}
-          onPress={() => handleCardClick("CreateDestination")}
-        >
-          <Image
-            source={LandingCardImg}
-            style={styles.backgroundImage}
-            resizeMode="cover"
-          />
-          <View style={styles.overlay} />
-          <Text style={styles.createCardText}>Create Destination</Text>
-          <Text style={styles.createCardSubText}>
-            Choose a location and invite people to join
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.createCard1}
-          onPress={() => handleCardClick("AllRequests")}
-        >
-          <Image
-            source={{
-              uri: "https://cdn.pixabay.com/photo/2017/03/25/17/55/colorful-2174045_960_720.png",
-            }}
-            style={styles.backgroundImageAlternative}
-            resizeMode="cover"
-          />
-          <View style={styles.overlay} />
-          <Text style={styles.createCardText}>All Requests</Text>
-          <Text style={styles.createCardSubText}>
-            See all invitations from other travelers
-          </Text>
-        </TouchableOpacity>
-      </View>
+        {!fromSearchScreen && !searchLocation && (
+          <View>
+            <Text style={styles.popularPlacesTitle}>
+              {" "}
+              {popularPlaces.length === 0
+                ? "No popular places nearby. Please increase the radius or search."
+                : "Popular Places"}
+            </Text>
+          </View>
+        )}
+        {!fromSearchScreen && !searchLocation && <PopularPlacesList />}
+        {fromSearchScreen && searchLocation && <DetailsCard />}
+        <View style={styles.createCardsContainer}>
+          <TouchableOpacity
+            style={styles.createCard1}
+            onPress={() => handleCardClick("CreateDestination")}
+          >
+            <Image
+              source={LandingCardImg}
+              style={styles.backgroundImage}
+              resizeMode="cover"
+            />
+            <View style={styles.overlay} />
+            <Text style={styles.createCardText}>Create Destination</Text>
+            <Text style={styles.createCardSubText}>
+              Choose a location and invite people to join
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.createCard1}
+            onPress={() => handleCardClick("AllRequests")}
+          >
+            <Image
+              source={{
+                uri: "https://cdn.pixabay.com/photo/2017/03/25/17/55/colorful-2174045_960_720.png",
+              }}
+              style={styles.backgroundImageAlternative}
+              resizeMode="cover"
+            />
+            <View style={styles.overlay} />
+            <Text style={styles.createCardText}>All Requests</Text>
+            <Text style={styles.createCardSubText}>
+              See all invitations from other travelers
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.createCardsContainer}>
-        <TouchableOpacity
-          style={[styles.createCard1, { marginLeft: 8 }]}
-          onPress={() => handleCardClick("History")}
-        >
-          <Image
-            source={{
-              uri: "https://cdn.pixabay.com/photo/2017/03/25/17/55/colorful-2174045_960_720.png",
-            }}
-            style={styles.backgroundImageAlternative}
-            resizeMode="cover"
-          />
-          <View style={styles.overlay} />
-          <Text style={styles.createCardText}>History</Text>
-          <Text style={styles.createCardSubText}>
-            Review your past travel experiences
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.createCard1, { marginLeft: 8 }]}
-          onPress={() => handleCardClick("OngoingJourney")}
-        >
-          <Image
-            source={LandingCardImg}
-            style={styles.backgroundImage}
-            resizeMode="cover"
-          />
-          <View style={styles.overlay} />
-          <Text style={styles.createCardText}>Ongoing Journey</Text>
-          <Text style={styles.createCardSubText}>
-            Keep track of your current group travels
-          </Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.createCardsContainer}>
+          <TouchableOpacity
+            style={[styles.createCard1]}
+            onPress={() => handleCardClick("History")}
+          >
+            <Image
+              source={{
+                uri: "https://cdn.pixabay.com/photo/2017/03/25/17/55/colorful-2174045_960_720.png",
+              }}
+              style={styles.backgroundImageAlternative}
+              resizeMode="cover"
+            />
+            <View style={styles.overlay} />
+            <Text style={styles.createCardText}>History</Text>
+            <Text style={styles.createCardSubText}>
+              Review your past travel experiences
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.createCard1]}
+            onPress={() => handleCardClick("OngoingJourney")}
+          >
+            <Image
+              source={LandingCardImg}
+              style={styles.backgroundImage}
+              resizeMode="cover"
+            />
+            <View style={styles.overlay} />
+            <Text style={styles.createCardText}>Ongoing Journey</Text>
+            <Text style={styles.createCardSubText}>
+              Keep track of your current group travels
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 
@@ -538,7 +543,7 @@ const styles = StyleSheet.create({
 
   mapContainer: {
     width: "100%",
-    height: "30%",
+    height: 200,
     borderRadius: 10,
     overflow: "hidden",
   },
@@ -563,7 +568,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   popularPlacesListContainer: {
-    height: "10%",
+    height: 100,
   },
   popularPlacesList: {
     flexDirection: "row",
@@ -670,18 +675,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 10,
     flex: 1,
+    flexGrow: 1,
   },
   createCardWrapper: {
     flex: 1,
     justifyContent: "center",
-
     alignItems: "center",
   },
   createCard1: {
     flex: 1,
     borderRadius: 8,
     paddingHorizontal: 16,
-    marginRight: 8,
+    marginHorizontal: 4,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",

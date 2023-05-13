@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import {
   StyleSheet,
   View,
@@ -8,6 +9,22 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import DatePicker from "../Components/DatePicker";
+import * as Crypto from "expo-crypto";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "../../firebase";
+import { cleanPhoneNumber } from "../Helper Functions/cleanPhoneNumber";
 
 const CardComponent = ({ recentDetails }) => {
   return (
@@ -40,7 +57,9 @@ const CardComponent = ({ recentDetails }) => {
 export default function CreateDestination({ route, navigation }) {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [recentDetails, setRecentDetails] = useState(null);
-
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -51,6 +70,11 @@ export default function CreateDestination({ route, navigation }) {
     } else if (route.params?.fromSearchScreen) {
       if (route.params?.selectedItem) {
         setSelectedLocation(route.params?.selectedItem);
+      }
+    } else if (route.params?.fromInvitePeople) {
+      // Add this condition
+      if (route.params?.selectedContacts) {
+        setSelectedContacts(route.params?.selectedContacts);
       }
     }
   }, [route]);
@@ -65,6 +89,115 @@ export default function CreateDestination({ route, navigation }) {
   const handleInvitePeople = () => {
     navigation.navigate("InvitePeople", {
       fromDestination: "CreateDestination",
+    });
+  };
+
+  const handleTimeChange = (value) => {
+    setSelectedTime(value);
+  };
+  const handleDateChange = (value) => {
+    setSelectedDate(value);
+  };
+
+  const handleStartJourney = async () => {
+    try {
+      const dest_details =
+        (selectedLocation && selectedLocation.display_name) || "";
+      let invitedPeople = selectedContacts || [];
+      const main_uuid = Crypto.randomUUID();
+      const user_uuid = Crypto.randomUUID();
+      const user = await AsyncStorage.getItem("@storage_Key");
+      if (user === null) {
+        return;
+      }
+      const admin_email = JSON.parse(user)?.email;
+      invitedPeople = invitedPeople.map((person) => {
+        return {
+          firstName: person.firstName,
+          phoneNumber:
+            person.phoneNumbers &&
+            person.phoneNumbers[0] &&
+            (cleanPhoneNumber(person.phoneNumbers[0].number) || null),
+        };
+      });
+
+      const journey_details = {
+        admin_email,
+        dest_details,
+        invitedPeople,
+        user_uuid,
+        main_uuid,
+        selectedDate,
+        selectedTime,
+      };
+
+      // Update users collection
+      const userRef = doc(db, "users", admin_email);
+      await setDoc(
+        userRef,
+        {
+          isOngoingJourney: true,
+          invitedJourney: {
+            admin_email,
+            main_uuid: journey_details,
+          },
+        },
+        { merge: true }
+      );
+
+      // Create new journey in journeys collection
+      const journeyRef = doc(db, "journeys", admin_email);
+      await setDoc(
+        journeyRef,
+        { [main_uuid]: journey_details },
+        { merge: true }
+      );
+
+      updateInvitedPeopleDetails(journey_details, admin_email);
+      navigation.navigate("OngoingJourney", {
+        fromCreateDestinationPage: true,
+        main_uuid,
+      });
+    } catch (error) {
+      console.error("An error occurred in handleStartJourney: ", error);
+    }
+  };
+
+  const updateInvitedPeopleDetails = (journey_details, admin_email) => {
+    journey_details.invitedPeople.forEach(async (p) => {
+      try {
+        let phoneNumber =
+          p.phoneNumbers[0].number.replaceAll(" ", "") || "not found";
+        if (phoneNumber.startsWith("+91")) {
+          phoneNumber = phoneNumber.substring(3);
+        }
+        const q = query(
+          collection(db, "users"),
+          where("phoneNumber", "==", phoneNumber),
+          where("email", "!=", admin_email)
+        );
+
+        const querySnapshot = await getDocs(q);
+        for (const singleDoc of querySnapshot.docs) {
+          const docRef = doc(db, "users", `${singleDoc.id}`);
+          await setDoc(
+            docRef,
+            {
+              isOngoingJourney: true,
+              invitedJourney: {
+                admin_email,
+                main_uuid: journey_details,
+              },
+            },
+            { merge: true }
+          );
+        }
+      } catch (error) {
+        console.error(
+          "An error occurred in updateInvitedPeopleDetails: ",
+          error
+        );
+      }
     });
   };
 
@@ -121,7 +254,9 @@ export default function CreateDestination({ route, navigation }) {
         </View>
         <View style={styles.addPeopleContainer}>
           <Text style={styles.recentSubHeading}>
-            Add people in this journey.
+            {selectedContacts.length != 0
+              ? `${selectedContacts.length} selected`
+              : "Add people in this journey."}
           </Text>
           <TouchableOpacity
             style={styles.addButton}
@@ -130,8 +265,20 @@ export default function CreateDestination({ route, navigation }) {
             <Text style={styles.addButtonText}>Add People</Text>
           </TouchableOpacity>
         </View>
-        {/* <View style={styles.horizontalDivider}></View> */}
       </View>
+      <View style={styles.invitePeopleContainer}>
+        <Text style={styles.recentHeading}>Select Journey Date</Text>
+        <DatePicker getTime={handleTimeChange} getDate={handleDateChange} />
+      </View>
+      <TouchableOpacity
+        style={styles.startJourneyButton}
+        onPress={() => {
+          // Implement your start journey logic here
+          handleStartJourney();
+        }}
+      >
+        <Text style={styles.startJourneyButtonText}>Start Journey</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -303,5 +450,23 @@ const styles = StyleSheet.create({
 
     marginTop: 10,
     paddingBottom: 4,
+  },
+  startJourneyButton: {
+    backgroundColor: "#257ACD",
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    paddingVertical: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute", // To position the button at the bottom
+    bottom: 16, // Adjust the distance from the bottom edge
+    left: 0,
+    right: 0,
+  },
+  startJourneyButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

@@ -35,9 +35,9 @@ export default function InvitePeople() {
   const [search, setSearch] = useState("");
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
+  const [registeredUsers, setRegisteredUsers] = useState(null);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-
 
   const addContact = useCallback((contact) => {
     setSelectedContacts((prev) => {
@@ -55,7 +55,7 @@ export default function InvitePeople() {
       const { status } = await Contacts.requestPermissionsAsync();
       if (status === "granted") {
         const { data } = await Contacts.getContactsAsync({
-          fields: [Contacts.Fields.Name],
+          fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
         });
 
         if (data.length > 0) {
@@ -85,7 +85,10 @@ export default function InvitePeople() {
   };
 
   const handleSaveContacts = () => {
-    navigation.navigate("CreateDestination", { selectedContacts });
+    navigation.navigate("CreateDestination", {
+      fromInvitePeople: true,
+      selectedContacts: selectedContacts,
+    });
   };
 
   const renderItem = useCallback(
@@ -131,6 +134,7 @@ export default function InvitePeople() {
         />
       </View>
       <FlatList
+        keyboardShouldPersistTaps="always"
         data={filteredContacts}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
@@ -157,7 +161,9 @@ const styles = StyleSheet.create({
     // borderRadius: 8,
   },
   listItemDefault: {
-    backgroundColor: "#343434",
+    // backgroundColor: "#343434",
+    borderBottomWidth: 1,
+    borderBottomColor: "#a4a4a42a",
   },
   listItemSelected: {
     backgroundColor: "#4b9eda",
@@ -167,7 +173,7 @@ const styles = StyleSheet.create({
   },
   listItemText: {
     fontSize: 18,
-    color: "#fff",
+    color: "black",
   },
   searchBarContainer: {
     flexDirection: "row",
@@ -198,7 +204,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   addButtonText: {
-    color: "#fff",
+    color: "black",
     fontWeight: "bold",
   },
   floatingNav: {
