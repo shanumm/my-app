@@ -153,24 +153,42 @@ export default function CreateDestination({ route, navigation }) {
         { merge: true }
       );
 
-      updateInvitedPeopleDetails(journey_details, admin_email);
-      navigation.navigate("OngoingJourney", {
-        fromCreateDestinationPage: true,
-        main_uuid,
-      });
+      const alreadyTravellingPeople = await updateInvitedPeopleDetails(
+        journey_details,
+        admin_email
+      );
+      if (alreadyTravellingPeople != null) {
+        // navigation.reset({
+        //   index: 1,
+        //   routes: [
+        //     { name: "HomeNavigator" }, // This will be the previous screen in the stack
+        //     {
+        //       name: "OngoingJourney",
+        //       params: {
+        //         alreadyTravellingPeople,
+        //         fromCreateDestinationPage: true,
+        //         main_uuid,
+        //       },
+        //     },
+        //   ],
+        // });
+        navigation.navigate("OngoingJourney", {
+          alreadyTravellingPeople,
+          fromCreateDestinationPage: true,
+          main_uuid,
+        });
+      }
     } catch (error) {
       console.error("An error occurred in handleStartJourney: ", error);
     }
   };
 
-  const updateInvitedPeopleDetails = (journey_details, admin_email) => {
-    journey_details.invitedPeople.forEach(async (p) => {
+  const updateInvitedPeopleDetails = async (journey_details, admin_email) => {
+    let ongoingJourneyUsers = [];
+
+    for (const p of journey_details.invitedPeople) {
       try {
-        let phoneNumber =
-          p.phoneNumbers[0].number.replaceAll(" ", "") || "not found";
-        if (phoneNumber.startsWith("+91")) {
-          phoneNumber = phoneNumber.substring(3);
-        }
+        let phoneNumber = p.phoneNumber;
         const q = query(
           collection(db, "users"),
           where("phoneNumber", "==", phoneNumber),
@@ -180,17 +198,26 @@ export default function CreateDestination({ route, navigation }) {
         const querySnapshot = await getDocs(q);
         for (const singleDoc of querySnapshot.docs) {
           const docRef = doc(db, "users", `${singleDoc.id}`);
-          await setDoc(
-            docRef,
-            {
-              isOngoingJourney: true,
-              invitedJourney: {
-                admin_email,
-                main_uuid: journey_details,
+          // Check if user has an ongoing journey
+          console.log(singleDoc.data());
+          if (singleDoc.data().isOngoingJourney === true) {
+            console.log(singleDoc.data(), ">>>>");
+            // Save the details of that person in an array
+            ongoingJourneyUsers.push(singleDoc.data());
+          } else {
+            // Update the user's document
+            await setDoc(
+              docRef,
+              {
+                isOngoingJourney: true,
+                invitedJourney: {
+                  admin_email,
+                  main_uuid: journey_details,
+                },
               },
-            },
-            { merge: true }
-          );
+              { merge: true }
+            );
+          }
         }
       } catch (error) {
         console.error(
@@ -198,7 +225,9 @@ export default function CreateDestination({ route, navigation }) {
           error
         );
       }
-    });
+    }
+
+    return ongoingJourneyUsers;
   };
 
   return (
