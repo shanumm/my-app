@@ -23,33 +23,33 @@ const LocationComponent = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          setErrorMsg("Permission to access location was denied");
-          return;
-        }
-
-        const location = await Location.getCurrentPositionAsync({});
-        setLocation(location);
-        const [currentAddress] = await Location.reverseGeocodeAsync(
-          location.coords
-        );
-        setAddress(currentAddress);
-
-        const { latitude, longitude } = location.coords;
-        setRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        });
-      } catch (error) {
-        setErrorMsg("Error getting location");
-      }
-    })();
+    getLocation();
   }, []);
+
+  const getLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+      let address = await Location.reverseGeocodeAsync(location.coords);
+      setAddress(address[0]);
+
+      setRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      });
+    } catch (error) {
+      console.error(error);
+      setErrorMsg("Could not fetch location");
+    }
+  };
 
   const handleSearch = async () => {
     navigation.navigate("HomeNavigator");

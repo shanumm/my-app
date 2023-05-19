@@ -416,6 +416,66 @@ const Landing = ({ route }) => {
                 />
               </Marker>
             )}
+            {fromSearchScreen &&
+              searchLocation &&
+              polylineCoordinates.length > 0 && (
+                <Polyline
+                  coordinates={polylineCoordinates}
+                  strokeWidth={3}
+                  strokeColor="#E16434"
+                />
+              )}
+            {/* {!searchLocation &&
+              popularPlaces.map((place) => (
+                <Marker
+                  key={place.id}
+                  coordinate={{
+                    latitude: place.lat,
+                    longitude: place.lon,
+                  }}
+                  title={place.tags.name}
+                >
+                  <Image
+                    source={{
+                      uri: "https://cdn-icons-png.flaticon.com/512/6153/6153497.png",
+                    }}
+                    style={{ width: 30, height: 30 }}
+                    resizeMode="contain"
+                  />
+                </Marker>
+              ))} */}
+          </MapView>
+        </View>
+        {/* <View style={styles.mapContainer}>
+          <MapView style={styles.map} region={region} ref={mapRef}>
+            {location && (
+              <Marker coordinate={location.coords} title="Selected Location">
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/512/1301/1301421.png",
+                  }}
+                  style={{ width: 30, height: 30 }}
+                  resizeMode="contain"
+                />
+              </Marker>
+            )}
+            {fromSearchScreen && searchLocation && (
+              <Marker
+                coordinate={{
+                  latitude: parseFloat(searchLocation.lat),
+                  longitude: parseFloat(searchLocation.lon),
+                }}
+                title={searchLocation.name}
+              >
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+                  }}
+                  style={{ width: 30, height: 30 }}
+                  resizeMode="contain"
+                />
+              </Marker>
+            )}
             {!searchLocation &&
               popularPlaces.map((place) => (
                 <Marker
@@ -445,7 +505,7 @@ const Landing = ({ route }) => {
                 />
               )}
           </MapView>
-        </View>
+        </View> */}
         {!fromSearchScreen && !searchLocation && (
           <View>
             <Text style={styles.popularPlacesTitle}>
@@ -530,7 +590,7 @@ const Landing = ({ route }) => {
       </ScrollView>
     </View>
   );
-
+  // return <View></View>;
   return <HomeScreen />;
 };
 
@@ -616,8 +676,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   menuIcon: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
   },
   profileCircle: {
     width: 40,

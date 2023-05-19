@@ -103,6 +103,10 @@ export default function CreateDestination({ route, navigation }) {
     try {
       const dest_details =
         (selectedLocation && selectedLocation.display_name) || "";
+      const dest_location = {
+        latitude: parseFloat(selectedLocation.lat),
+        longitude: parseFloat(selectedLocation.lon),
+      };
       let invitedPeople = selectedContacts || [];
       const main_uuid = Crypto.randomUUID();
       const user_uuid = Crypto.randomUUID();
@@ -129,6 +133,7 @@ export default function CreateDestination({ route, navigation }) {
         main_uuid,
         selectedDate,
         selectedTime,
+        dest_location,
       };
 
       // Update users collection
@@ -137,10 +142,10 @@ export default function CreateDestination({ route, navigation }) {
         userRef,
         {
           isOngoingJourney: true,
-          invitedJourney: {
+          invitedJourney: arrayUnion({
             admin_email,
             main_uuid: journey_details,
-          },
+          }),
         },
         { merge: true }
       );
@@ -210,10 +215,10 @@ export default function CreateDestination({ route, navigation }) {
               docRef,
               {
                 isOngoingJourney: true,
-                invitedJourney: {
+                invitedJourney: arrayUnion({
                   admin_email,
                   main_uuid: journey_details,
-                },
+                }),
               },
               { merge: true }
             );

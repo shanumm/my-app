@@ -55,6 +55,7 @@ const SearchContainer = ({ navigation, route }) => {
   };
 
   useEffect(() => {
+    console.log(selectedItem, ">>>>>");
     if (selectedItem) {
       if (!fromDestination.length) {
         navigation.navigate("Home", {

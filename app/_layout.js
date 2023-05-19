@@ -12,6 +12,7 @@ import CreateDestination from "./Screens/CreateDestination";
 import History from "./History";
 import InvitePeople from "./Screens/InvitePeople";
 import OngoingJourney from "./OngoingJourney";
+import AllRequests from "./Screens/AllRequests";
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -68,6 +69,11 @@ const Layout = () => {
       <Stack.Screen
         name="CreateDestination"
         component={CreateDestination}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AllRequests"
+        component={AllRequests}
         options={{ headerShown: false }}
       />
       <Stack.Screen

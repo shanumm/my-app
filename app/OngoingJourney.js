@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import * as Location from "expo-location";
 import React, { useEffect, useState } from "react";
 import {
   arrayRemove,
@@ -40,10 +41,13 @@ const mockUp = [
 
 const OngoingJourney = ({ route }) => {
   const [activeStep, setActiveStep] = useState(0);
+  const [currentUserDetails, setCurrentUserDetails] = useState(null);
   const [invitedJourneyDetails, setInvitedJounetDetails] = useState(null);
   const [selectedJourneyDetails, setSelectedJounetDetails] = useState(null);
   const [alreadyTravellingPeople, setAlreadyTravellingPeople] = useState([]);
   const [mockUpData, setMockUpData] = useState(mockUp);
+  const [journey_uuid, setJourney_uuid] = useState(null);
+  const [fromAllRequests, setFromAllRequests] = useState(false);
   const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleTimeString()
   );
@@ -53,10 +57,33 @@ const OngoingJourney = ({ route }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
+  const getRealTimeData = async () => {
+    try {
+      let user = await AsyncStorage.getItem("@storage_Key");
+      if (user != null) {
+        let email = JSON.parse(user)?.email;
+        if (email) {
+          getUserData(email);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to get real time data", error);
+    }
+  };
+
   useEffect(() => {
+    if (route.params?.fromAllRequestes) {
+      setJourney_uuid(route.params?.journeyDetail?.main_uuid?.main_uuid);
+      setFromAllRequests(route.params?.fromAllRequestes);
+      getRealTimeData(route.params?.journeyDetail?.main_uuid?.main_uuid);
+      setActiveStep(1);
+      // getLocation();
+    }
+
     if (route.params?.alreadyTravellingPeople?.length > 0) {
       setAlreadyTravellingPeople(route.params?.alreadyTravellingPeople);
     }
+
     if (
       route.params?.fromCreateDestinationPage ||
       route.params?.fromLandingPage
@@ -64,6 +91,84 @@ const OngoingJourney = ({ route }) => {
       getRealTimeData(route.params?.main_uuid);
     }
   }, [route]);
+
+  useEffect(() => {
+    let locationSubscriber = null;
+    const getLocation = async () => {
+      const user = await AsyncStorage.getItem("@storage_Key");
+
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.error("Permission to access location was denied");
+        return;
+      }
+
+      locationSubscriber = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 4000,
+          distanceInterval: 0,
+        },
+        async (location, error) => {
+          if (error) {
+            console.error(error);
+            return;
+          }
+          const { latitude, longitude } = location.coords;
+          console.log(latitude, longitude);
+          if (user != null) {
+            const email = JSON.parse(user)?.email;
+            if (email) {
+              await updateLocation(email, latitude, longitude);
+            }
+          }
+        }
+      );
+    };
+    if (!invitedJourneyDetails) {
+      return;
+    } else {
+      getLocation();
+    }
+    return () => {
+      if (locationSubscriber != null) {
+        locationSubscriber.remove();
+      }
+    };
+  }, [invitedJourneyDetails]);
+
+  const updateLocation = async (userEmail, latitude, longitude) => {
+    if (!invitedJourneyDetails) {
+      console.log("invitedJourneyDetails is null");
+      return;
+    }
+
+    try {
+      const journeyRef = doc(db, "journeys", invitedJourneyDetails.admin_email);
+      const docSnap = await getDoc(journeyRef);
+
+      if (docSnap.exists()) {
+        const journeyData = docSnap.data();
+        const invitedPeopleData = Object.values(journeyData)[0].invitedPeople;
+
+        const updatedPeopleData = invitedPeopleData.map((person) => {
+          if (person.phoneNumber === currentUserDetails.phoneNumber) {
+            return { ...person, coords: { latitude, longitude } };
+          } else {
+            return person;
+          }
+        });
+
+        let updatedPath = `${journey_uuid}.invitedPeople`;
+
+        await updateDoc(journeyRef, { [updatedPath]: updatedPeopleData });
+      } else {
+        console.log("Document does not exist");
+      }
+    } catch (err) {
+      console.log("Error caught in updateLocation:", err);
+    }
+  };
 
   useEffect(() => {
     if (invitedJourneyDetails) {
@@ -82,17 +187,9 @@ const OngoingJourney = ({ route }) => {
     const docRef = doc(db, "users", user);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
+      setCurrentUserDetails(docSnap.data());
       setInvitedJounetDetails(docSnap.data()?.invitedJourney);
-    }
-  };
-
-  const getRealTimeData = async (main_uuid) => {
-    const user = await AsyncStorage.getItem("@storage_Key");
-    if (user != null) {
-      const email = JSON.parse(user)?.email;
-      if (email) {
-        getUserData(email);
-      }
+      console.log(docSnap.data()?.invitedJourney, ">><<");
     }
   };
 
@@ -266,7 +363,13 @@ const OngoingJourney = ({ route }) => {
     </View>
   ) : (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-      <OngoingJourneyMap />
+      {selectedJourneyDetails && (
+        <OngoingJourneyMap
+          selectedJourneyDetails={selectedJourneyDetails}
+          invitedPeople={selectedJourneyDetails.invitedPeople}
+          currentUserDetails={currentUserDetails}
+        />
+      )}
     </View>
   );
 };
