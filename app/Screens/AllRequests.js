@@ -2,7 +2,7 @@ import { Button, ImageBackground, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useNavigation } from "@react-navigation/native";
 
@@ -25,18 +25,13 @@ const AllRequests = () => {
     getAdminEmail();
   });
 
-  const handleAccept = async (main_uuid) => {
+  const handleAccept = async (data) => {
     try {
-      const docRef = doc(
-        db,
-        "journeys",
-        ongoingJourneyList.invitedJourney.admin_email
-      );
+      const docRef = doc(db, "journeys", data.admin_email);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const invitedPeople =
-          docSnap.data()[ongoingJourneyList.invitedJourney.main_uuid.main_uuid]
-            .invitedPeople;
+          docSnap.data()[data.main_uuid.main_uuid].invitedPeople;
 
         invitedPeople.forEach((person) => {
           if (person.phoneNumber === ongoingJourneyList.phoneNumber) {
@@ -45,14 +40,26 @@ const AllRequests = () => {
         });
 
         // Now, update the document with the new data
-        let updatedPath = `${ongoingJourneyList.invitedJourney.main_uuid.main_uuid}.invitedPeople`;
+        let updatedPath = `${data.main_uuid.main_uuid}.invitedPeople`;
         setIsJourneyAccepted(true);
         await updateDoc(docRef, {
           [updatedPath]: invitedPeople,
         });
+        const userRef = doc(db, "users", adminEmail);
+        await setDoc(
+          userRef,
+          {
+            isOngoingJourney: true,
+            activeJourneyDetails: {
+              admin_email: data.admin_email,
+              activeJourneyUUID: data.main_uuid.main_uuid,
+            },
+          },
+          { merge: true }
+        );
         navigation.navigate("OngoingJourney", {
           fromAllRequestes: true,
-          journeyDetail: ongoingJourneyList.invitedJourney,
+          journeyDetail: data,
         });
       }
     } catch (error) {
@@ -61,15 +68,19 @@ const AllRequests = () => {
   };
 
   useEffect(() => {
+    console.log(ongoingJourneyList, ">>Test");
+  }, [ongoingJourneyList]);
+
+  useEffect(() => {
     const getUserData = async () => {
       if (adminEmail) {
         try {
           const docRef = doc(db, "users", adminEmail);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            if (docSnap.data().isOngoingJourney) {
-              setOngoingJourneyList(docSnap.data());
-            }
+            // if (docSnap.data().isOngoingJourney) {
+            setOngoingJourneyList(docSnap.data());
+            // }
           }
         } catch (error) {
           console.error("Failed to fetch user data: ", error);
@@ -119,7 +130,7 @@ const AllRequests = () => {
         <View style={styles.buttonContainer}>
           <Text
             style={styles.buttonText}
-            onPress={() => handleAccept(ongoingJourneyList.main_uuid)}
+            onPress={() => handleAccept(ongoingJourneyList)}
           >
             {!isJourneyAccepted ? "Accept" : "Ongoing"}
           </Text>
@@ -143,8 +154,10 @@ const AllRequests = () => {
           <Text style={styles.imageText}>All Requests</Text>
         </ImageBackground>
       </View>
-      {ongoingJourneyList ? (
-        <InvitedList ongoingJourneyList={ongoingJourneyList.invitedJourney} />
+      {ongoingJourneyList && ongoingJourneyList?.invitedJourney ? (
+        ongoingJourneyList?.invitedJourney?.map((journey) => (
+          <InvitedList ongoingJourneyList={journey} />
+        ))
       ) : (
         <View
           style={{
@@ -246,9 +259,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonText: {
-    borderColor: "#32d5e7",
-    borderWidth: 2,
-    color: "#32d5e7",
+    backgroundColor: "#32d5e7",
+    color: "#ffffff",
     paddingHorizontal: 30,
     paddingVertical: 10,
     borderRadius: 10,

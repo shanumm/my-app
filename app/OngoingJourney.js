@@ -75,7 +75,7 @@ const OngoingJourney = ({ route }) => {
     if (route.params?.fromAllRequestes) {
       setJourney_uuid(route.params?.journeyDetail?.main_uuid?.main_uuid);
       setFromAllRequests(route.params?.fromAllRequestes);
-      getRealTimeData(route.params?.journeyDetail?.main_uuid?.main_uuid);
+      // getRealTimeData(route.params?.journeyDetail?.main_uuid?.main_uuid);
       setActiveStep(1);
       // getLocation();
     }
@@ -88,9 +88,16 @@ const OngoingJourney = ({ route }) => {
       route.params?.fromCreateDestinationPage ||
       route.params?.fromLandingPage
     ) {
-      getRealTimeData(route.params?.main_uuid);
+      console.log(route.params, ">>>>><<<<testing");
+      setJourney_uuid(route.params?.main_uuid);
+      // getRealTimeData(route.params?.main_uuid);
     }
   }, [route]);
+
+  useEffect(() => {
+    console.log("test");
+    getRealTimeData(journey_uuid);
+  }, [journey_uuid]);
 
   useEffect(() => {
     let locationSubscriber = null;
@@ -115,7 +122,6 @@ const OngoingJourney = ({ route }) => {
             return;
           }
           const { latitude, longitude } = location.coords;
-          console.log(latitude, longitude);
           if (user != null) {
             const email = JSON.parse(user)?.email;
             if (email) {
@@ -139,7 +145,6 @@ const OngoingJourney = ({ route }) => {
 
   const updateLocation = async (userEmail, latitude, longitude) => {
     if (!invitedJourneyDetails) {
-      console.log("invitedJourneyDetails is null");
       return;
     }
 
@@ -188,8 +193,12 @@ const OngoingJourney = ({ route }) => {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       setCurrentUserDetails(docSnap.data());
-      setInvitedJounetDetails(docSnap.data()?.invitedJourney);
-      console.log(docSnap.data()?.invitedJourney, ">><<");
+      let foundJourney = docSnap
+        .data()
+        ?.invitedJourney.find(
+          (element) => element.main_uuid.main_uuid === journey_uuid
+        );
+      setInvitedJounetDetails(foundJourney);
     }
   };
 
@@ -336,7 +345,8 @@ const OngoingJourney = ({ route }) => {
         </ImageBackground>
       </View>
       <Text style={styles.OngoingJourneyTitle}>Invited</Text>
-      {selectedJourneyDetails?.invitedPeople?.length > 0 &&
+      {selectedJourneyDetails &&
+        selectedJourneyDetails?.invitedPeople?.length > 0 &&
         selectedJourneyDetails.invitedPeople.map((IP) => (
           <TouchableOpacity onLongPress={() => handleLongPress(IP)}>
             <InvitedPeopleComponent invitedPeopleList={IP || []} />
@@ -347,19 +357,49 @@ const OngoingJourney = ({ route }) => {
           <InvitedPeopleComponent invitedPeopleList={IP} />
         </TouchableOpacity>
       ))} */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleGoBack} style={styles.cancelButton}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
+      {selectedJourneyDetails ? (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity onPress={handleGoBack} style={styles.cancelButton}>
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setActiveStep(1)}
-          style={styles.proceedButton}
+          <TouchableOpacity
+            onPress={() => setActiveStep(1)}
+            style={styles.proceedButton}
+          >
+            <Text style={styles.buttonText}>Proceed</Text>
+            {/* <AntDesign name="arrowright" size={24} color="white" /> */}
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View
+          style={{
+            flex: 0.8,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
         >
-          <Text style={styles.buttonText}>Proceed</Text>
-          {/* <AntDesign name="arrowright" size={24} color="white" /> */}
-        </TouchableOpacity>
-      </View>
+          <ImageBackground
+            source={{
+              uri: "https://cdn-icons-png.flaticon.com/512/9841/9841553.png",
+            }}
+            style={{ width: "100%", height: "50%" }}
+            resizeMode="contain"
+          >
+            <Text
+              style={{
+                position: "absolute",
+                bottom: 60,
+                fontSize: 24,
+                textAlign: "center",
+                width: "100%",
+              }}
+            >
+              There is no current ongoing journey
+            </Text>
+          </ImageBackground>
+        </View>
+      )}
     </View>
   ) : (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>

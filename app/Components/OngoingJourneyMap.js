@@ -1,6 +1,6 @@
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Callout, Marker, Polyline } from "react-native-maps";
 import { db } from "../../firebase";
 
@@ -10,11 +10,11 @@ const OngoingJourneyMap = ({
   currentUserDetails,
 }) => {
   const destination = selectedJourneyDetails.dest_location;
-
   const [everyonesLocation, setEveryonesLocation] = useState(null);
   const [coordinates, setCoordinates] = useState([]);
   const [destinationDetails, setDestinationDetails] = useState(null);
   const [travellingPeoples, setTravellingPeoples] = useState(null);
+  const [travellingMode, setTravellingMode] = useState("car");
   const [region, setRegion] = useState({
     latitude: destination.latitude,
     longitude: destination.longitude,
@@ -22,16 +22,24 @@ const OngoingJourneyMap = ({
     longitudeDelta: 0.0421,
   });
 
+  const walkingUrl = "https://cdn-icons-png.flaticon.com/512/4557/4557251.png";
+  const carUrl = "https://cdn-icons-png.flaticon.com/512/3097/3097180.png";
+  const bikeUrl = "https://cdn-icons-png.flaticon.com/512/3198/3198336.png";
+
   const [points, setPoints] = useState(null);
   useEffect(() => {
     const getDirections = async (pointA, pointB) => {
       try {
+        console.log(
+          `https://router.project-osrm.org/route/v1/${travellingMode}/${pointA.longitude},${pointA.latitude};${pointB.longitude},${pointB.latitude}?overview=full&geometries=geojson`
+        );
         const response = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${pointA.longitude},${pointA.latitude};${pointB.longitude},${pointB.latitude}?overview=full&geometries=geojson`
+          `https://router.project-osrm.org/route/v1/${travellingMode}/${pointA.longitude},${pointA.latitude};${pointB.longitude},${pointB.latitude}?overview=full&geometries=geojson`
         );
         const data = await response.json();
         if (data.code === "Ok") {
           setDestinationDetails(data);
+          console.log(data);
           return data.routes[0].geometry.coordinates.map((point) => ({
             latitude: point[1],
             longitude: point[0],
@@ -75,7 +83,7 @@ const OngoingJourneyMap = ({
     };
 
     getMultipleDirections();
-  }, [points]);
+  }, [points, travellingMode]);
 
   const getCurrentLocations = () => {
     try {
@@ -160,6 +168,29 @@ const OngoingJourneyMap = ({
     // getCurrentLocations();
   }, []);
 
+  const handleTravelMethodChange = () => {
+    if (travellingMode === "car") {
+      setTravellingMode("bike");
+    } else if (travellingMode === "bike") {
+      setTravellingMode("foot");
+    } else if (travellingMode === "foot") {
+      setTravellingMode("car");
+    }
+  };
+
+  const distanceInKM = (value) => {
+    let result = value / 1000 || 1;
+    return parseFloat(result.toFixed(1));
+  };
+  const timeInMinutes = (value) => {
+    let result = value / 60 || 10;
+    const formattedResult =
+      result < 60
+        ? `${Math.round(result)} min`
+        : `${Math.floor(result / 60)} hr ${Math.round(result % 60)} min`;
+    return formattedResult;
+  };
+
   const MapPoints = () =>
     !points
       ? null
@@ -178,15 +209,23 @@ const OngoingJourneyMap = ({
                 {travellingPeoples &&
                   travellingPeoples[index] &&
                   travellingPeoples[index].firstName && (
-                    <Callout>
+                    <Callout style={styles.calloutContainerWrapper}>
                       <View style={styles.calloutContainer}>
                         <Text style={styles.calloutText}>
-                          Estimated time to distance:{" "}
-                          {destinationDetails?.routes[0]?.distance || "NULL"}
+                          {travellingPeoples[index].firstName}
                         </Text>
                         <Text style={styles.calloutText}>
-                          Estimated time to destination:{" "}
-                          {destinationDetails?.routes[0]?.duration || "NULL"}
+                          Distance:{" "}
+                          {distanceInKM(
+                            destinationDetails?.routes[0]?.distance
+                          ) || "NULL"}{" "}
+                          K.M
+                        </Text>
+                        <Text style={styles.calloutText}>
+                          Estimated time:{" "}
+                          {timeInMinutes(
+                            destinationDetails?.routes[0]?.duration
+                          ) || "NULL"}
                         </Text>
                       </View>
                     </Callout>
@@ -196,7 +235,13 @@ const OngoingJourneyMap = ({
           } else {
             // This is the destination
             return (
-              <Marker key={index} coordinate={point} title="Destination" />
+              <Marker key={index} coordinate={point}>
+                <Callout style={styles.calloutContainerWrapper}>
+                  <View>
+                    <Text>{selectedJourneyDetails.dest_details}</Text>
+                  </View>
+                </Callout>
+              </Marker>
             );
           }
         });
@@ -210,12 +255,60 @@ const OngoingJourneyMap = ({
             <Polyline
               key={index}
               coordinates={route}
-              strokeColor="#000"
+              strokeColor="#226072"
               strokeWidth={3}
             />
           ))}
         </MapView>
       )}
+      <View style={styles.journeyDetailsContainer}>
+        <Text style={styles.journeyDetailHeading}>Details</Text>
+        <View style={styles.journeyDetailContentContainer}>
+          <View>
+            <Text style={styles.journeyDetailContent}>
+              Estimated Distance {" -> "}
+              {distanceInKM(destinationDetails?.routes[0]?.distance) ||
+                "NULL"}{" "}
+              K.M
+            </Text>
+            <Text style={styles.journeyDetailContent}>
+              Estimated Time {" -> "}
+              {timeInMinutes(destinationDetails?.routes[0]?.duration) || "NULL"}
+            </Text>
+          </View>
+          <View style={styles.journeyDetailTravelMethod}>
+            <TouchableOpacity onPress={handleTravelMethodChange}>
+              <Image
+                source={{
+                  uri:
+                    travellingMode === "car"
+                      ? carUrl
+                      : travellingMode == "bike"
+                      ? bikeUrl
+                      : walkingUrl,
+                }}
+                style={{ width: 50, height: 50 }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "space-between",
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <TouchableOpacity style={styles.customButtonContainerWrapper}>
+            <View style={styles.customButtonContainer}>
+              <Text style={styles.customButtonText}>Pause</Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={{ flex: 1, textAlign: "right" }}>Show More Details</Text>
+        </View>
+      </View>
     </View>
   );
 };
@@ -228,12 +321,13 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+    // width: "100%",
+    // height: "80%",
   },
   markerContainer: {
     backgroundColor: "#2c2c2c", // Replace "darkcolor" with your preferred color
     borderRadius: 20, // This will make the marker circular
     // padding: 10,
-    borderWidth: 2,
     width: 30,
     height: 30,
     justifyContent: "center",
@@ -242,5 +336,55 @@ const styles = StyleSheet.create({
   markerText: {
     color: "#fff",
     fontSize: 14,
+  },
+  journeyDetailsContainer: {
+    backgroundColor: "white",
+    height: "20%",
+    marginTop: "auto",
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  journeyDetailHeading: {
+    fontSize: 28,
+    marginBottom: 10,
+  },
+  journeyDetailContentContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  journeyDetailContent: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  journeyDetailTravelMethod: {
+    paddingRight: 20,
+    alignItems: "center",
+    borderRadius: 50,
+    backgroundColor: "#EAF2FD",
+    width: 50,
+    height: 50,
+  },
+  calloutContainerWrapper: {
+    width: 150,
+  },
+
+  customButtonContainer: {
+    backgroundColor: "#007BFF", // change this to your preferred color
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  customButtonText: {
+    color: "#FFFFFF", // change this to your preferred color
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  customButtonContainerWrapper: {
+    flex: 1,
   },
 });

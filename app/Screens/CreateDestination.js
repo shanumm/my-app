@@ -141,7 +141,7 @@ export default function CreateDestination({ route, navigation }) {
       await setDoc(
         userRef,
         {
-          isOngoingJourney: true,
+          // isOngoingJourney: true,
           invitedJourney: arrayUnion({
             admin_email,
             main_uuid: journey_details,
@@ -214,7 +214,7 @@ export default function CreateDestination({ route, navigation }) {
             await setDoc(
               docRef,
               {
-                isOngoingJourney: true,
+                // isOngoingJourney: true,
                 invitedJourney: arrayUnion({
                   admin_email,
                   main_uuid: journey_details,

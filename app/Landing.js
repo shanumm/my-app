@@ -42,6 +42,7 @@ const Landing = ({ route }) => {
   const [mapRef, setMapRef] = useState(null);
   const [polylineCoordinates, setPolylineCoordinates] = useState([]);
   const [initialTripDetails, setInitialTripDetails] = useState(null);
+  const [activeJourney, setActiveJourney] = useState(null);
 
   const insets = useSafeAreaInsets();
 
@@ -229,6 +230,7 @@ const Landing = ({ route }) => {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       setName(docSnap.data().name);
+      setActiveJourney(docSnap.data()?.activeJourneyDetails || null);
     } else {
     }
   };
@@ -279,7 +281,12 @@ const Landing = ({ route }) => {
     if (url === "CreateDestination")
       navigation.navigate(url, { searchLocation, fromLandingPage: true });
     // {searchLocation.display_name || "Test"}
-    else {
+    else if (url === "OngoingJourney") {
+      navigation.navigate(url, {
+        main_uuid: activeJourney.activeJourneyUUID,
+        fromLandingPage: true,
+      });
+    } else {
       navigation.navigate(url);
     }
   };
