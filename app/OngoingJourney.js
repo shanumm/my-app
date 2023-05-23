@@ -328,7 +328,7 @@ const OngoingJourney = ({ route }) => {
   };
 
   return activeStep === 0 ? (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+    <View style={[styles.container, { paddingTop: insets.top}]}>
       <View style={styles.navBar}>
         <ImageBackground
           source={{

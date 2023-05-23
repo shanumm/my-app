@@ -1,8 +1,20 @@
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import React, { useState, useEffect } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import MapView, { Callout, Marker, Polyline } from "react-native-maps";
 import { db } from "../../firebase";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 const OngoingJourneyMap = ({
   selectedJourneyDetails,
@@ -14,6 +26,8 @@ const OngoingJourneyMap = ({
   const [coordinates, setCoordinates] = useState([]);
   const [destinationDetails, setDestinationDetails] = useState(null);
   const [travellingPeoples, setTravellingPeoples] = useState(null);
+  const [isShowMoreClosed, setIsShowMoreClosed] = useState(true);
+  const [isJourneyPaused, setIsJourneyPaused] = useState(false);
   const [travellingMode, setTravellingMode] = useState("car");
   const [region, setRegion] = useState({
     latitude: destination.latitude,
@@ -108,10 +122,10 @@ const OngoingJourneyMap = ({
           // Adding the destination to the end of the array
           coords.push(destination);
           setPoints(coords);
-
           const travellers = invitedPeople
             .filter((person) => person.accepted && person.coords)
             .map((person) => person);
+
           setTravellingPeoples(travellers);
         }
       });
@@ -123,49 +137,12 @@ const OngoingJourneyMap = ({
     }
   };
 
-  // useEffect(() => {
-  //   console.log("destinationDetails", destinationDetails);
-  // }, [destinationDetails]);
-
   useEffect(() => {
     const unsubscribe = getCurrentLocations();
 
     return () => {
       unsubscribe();
     };
-    // const getCurrentLocations = async () => {
-    //   try {
-    //     const journeyRef = doc(
-    //       db,
-    //       "journeys",
-    //       selectedJourneyDetails.admin_email
-    //     );
-    //     const docSnap = await getDoc(journeyRef);
-    //     if (docSnap.exists()) {
-    //       const invitedPeople =
-    //         docSnap.data()[selectedJourneyDetails.main_uuid].invitedPeople;
-    //       setEveryonesLocation(invitedPeople);
-
-    //       // Filtering out only those users who have accepted and have coords
-    //       const coords = invitedPeople
-    //         .filter((person) => person.accepted && person.coords)
-    //         .map((person) => person.coords);
-
-    //       // Adding the destination to the end of the array
-    //       coords.push(destination);
-    //       setPoints(coords);
-
-    //       const travellers = invitedPeople
-    //         .filter((person) => person.accepted && person.coords)
-    //         .map((person) => person);
-    //       setTravellingPeoples(travellers);
-    //     }
-    //   } catch (error) {
-    //     console.log(error);
-    //   }
-    // };
-
-    // getCurrentLocations();
   }, []);
 
   const handleTravelMethodChange = () => {
@@ -198,7 +175,12 @@ const OngoingJourneyMap = ({
           if (index < points.length - 1) {
             return (
               <Marker key={index} coordinate={point}>
-                <View style={styles.markerContainer}>
+                <View
+                  style={[
+                    styles.markerContainer,
+                    isJourneyPaused ? { backgroundColor: "orange" } : null,
+                  ]}
+                >
                   <Text style={styles.markerText}>
                     {travellingPeoples &&
                       travellingPeoples[index] &&
@@ -246,6 +228,43 @@ const OngoingJourneyMap = ({
           }
         });
 
+  useEffect(() => {
+    const handleJouenyPause = async () => {
+      try {
+        const journeyRef = doc(
+          db,
+          "journeys",
+          selectedJourneyDetails.admin_email
+        );
+        const data = await getDoc(journeyRef);
+        const invitedPeople =
+          data.data()[[selectedJourneyDetails.main_uuid]].invitedPeople;
+
+        const travellers = invitedPeople
+          .filter((person) => person.accepted && person.coords)
+          .map((person) => {
+            if (person.phoneNumber === currentUserDetails.phoneNumber) {
+              return { ...person, isPaused: isJourneyPaused };
+            } else {
+              return person;
+            }
+          });
+        let updatedPath = `${selectedJourneyDetails.main_uuid}.invitedPeople`;
+
+        await updateDoc(journeyRef, { [updatedPath]: travellers });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    handleJouenyPause();
+  }, [isJourneyPaused]);
+
+  const animation = useSharedValue({ height: "20%", width: "100%" });
+
+  const animationStyle = useAnimatedStyle(() => ({
+    height: withTiming(animation.value.height, { duration: 800 }),
+  }));
+
   return (
     <View style={styles.container}>
       {points && (
@@ -261,7 +280,7 @@ const OngoingJourneyMap = ({
           ))}
         </MapView>
       )}
-      <View style={styles.journeyDetailsContainer}>
+      <Animated.View style={[styles.journeyDetailsContainer, animationStyle]}>
         <Text style={styles.journeyDetailHeading}>Details</Text>
         <View style={styles.journeyDetailContentContainer}>
           <View>
@@ -295,20 +314,93 @@ const OngoingJourneyMap = ({
         </View>
         <View
           style={{
-            flex: 1,
             justifyContent: "space-between",
             flexDirection: "row",
             alignItems: "center",
+            marginTop: 20,
           }}
         >
-          <TouchableOpacity style={styles.customButtonContainerWrapper}>
+          <TouchableOpacity
+            style={styles.customButtonContainerWrapper}
+            onPress={() => {
+              setIsJourneyPaused(!isJourneyPaused);
+            }}
+          >
             <View style={styles.customButtonContainer}>
-              <Text style={styles.customButtonText}>Pause</Text>
+              <Text style={styles.customButtonText}>
+                {isJourneyPaused ? "Resume" : "Pause"}
+              </Text>
             </View>
           </TouchableOpacity>
-          <Text style={{ flex: 1, textAlign: "right" }}>Show More Details</Text>
+          <Text
+            style={{ flex: 1, textAlign: "right" }}
+            onPress={() => {
+              setIsShowMoreClosed(!isShowMoreClosed);
+              animation.value = { height: isShowMoreClosed ? "40%" : "20%" };
+            }}
+          >
+            {!isShowMoreClosed ? "Hide" : "Show More"} Details
+          </Text>
         </View>
-      </View>
+        {!isShowMoreClosed && (
+          <ScrollView style={{ marginTop: 20 }}>
+            {travellingPeoples.map((person) => (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginVertical: 4,
+                }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <View style={styles.markerContainer1}>
+                    <Text style={styles.markerText1}>
+                      {person.firstName[0]}
+                    </Text>
+                  </View>
+                  <View style={{ marginLeft: 10 }}>
+                    <Text style={{ fontSize: 20 }}>
+                      {person.firstName} {"-->  "}{" "}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text style={{ fontSize: 16 }}>
+                      {distanceInKM(destinationDetails?.routes[0]?.distance) ||
+                        "NULL"}{" "}
+                      K.M ,
+                    </Text>
+                  </View>
+                  <View>
+                    <Text style={{ fontSize: 16 }}>
+                      {timeInMinutes(destinationDetails?.routes[0]?.duration) ||
+                        "NULL"}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={{ color: "red" }}>
+                  {/* {console.log(
+                    selectedJourneyDetails,
+                    "=====",
+                    person.phoneNumber
+                  )} */}
+                  {/* {currentUserDetails.phoneNumber === person.phoneNumber
+                    ? "Exit"
+                    : selectedJourneyDetails.phoneNumber === person.phoneNumber
+                    ? "Remove"
+                    : null} */}
+                  {person.isPaused ? "Stopped" : "Traveling"}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </Animated.View>
     </View>
   );
 };
@@ -333,13 +425,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  markerContainer1: {
+    backgroundColor: "#2c2c2c", // Replace "darkcolor" with your preferred color
+    borderRadius: 20, // This will make the marker circular
+    // padding: 10,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   markerText: {
     color: "#fff",
     fontSize: 14,
   },
+  markerText1: {
+    color: "#fff",
+    fontSize: 18,
+  },
   journeyDetailsContainer: {
     backgroundColor: "white",
-    height: "20%",
+    // height: "20%",
+    // width: "100%",
     marginTop: "auto",
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,

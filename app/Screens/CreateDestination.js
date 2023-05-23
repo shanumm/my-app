@@ -115,13 +115,25 @@ export default function CreateDestination({ route, navigation }) {
         return;
       }
       const admin_email = JSON.parse(user)?.email;
+
+      const userRef = doc(db, "users", admin_email);
+      const currentUserDataRef = await getDoc(userRef);
+
       invitedPeople = invitedPeople.map((person) => {
+        const phoneNumber =
+          person.phoneNumbers &&
+          person.phoneNumbers[0] &&
+          (cleanPhoneNumber(person.phoneNumbers[0].number) || null);
+
+        const accepted =
+          phoneNumber === currentUserDataRef.data().phoneNumber
+            ? true
+            : undefined;
+
         return {
           firstName: person.firstName,
-          phoneNumber:
-            person.phoneNumbers &&
-            person.phoneNumbers[0] &&
-            (cleanPhoneNumber(person.phoneNumbers[0].number) || null),
+          phoneNumber,
+          ...(accepted !== undefined && { accepted }), // Add the 'accepted' key only if it is defined
         };
       });
 
@@ -137,11 +149,16 @@ export default function CreateDestination({ route, navigation }) {
       };
 
       // Update users collection
-      const userRef = doc(db, "users", admin_email);
+
       await setDoc(
         userRef,
         {
           // isOngoingJourney: true,
+          isOngoingJourney: true,
+          activeJourneyDetails: {
+            admin_email: admin_email,
+            activeJourneyUUID: main_uuid,
+          },
           invitedJourney: arrayUnion({
             admin_email,
             main_uuid: journey_details,
@@ -163,20 +180,6 @@ export default function CreateDestination({ route, navigation }) {
         admin_email
       );
       if (alreadyTravellingPeople != null) {
-        // navigation.reset({
-        //   index: 1,
-        //   routes: [
-        //     { name: "HomeNavigator" }, // This will be the previous screen in the stack
-        //     {
-        //       name: "OngoingJourney",
-        //       params: {
-        //         alreadyTravellingPeople,
-        //         fromCreateDestinationPage: true,
-        //         main_uuid,
-        //       },
-        //     },
-        //   ],
-        // });
         navigation.navigate("OngoingJourney", {
           alreadyTravellingPeople,
           fromCreateDestinationPage: true,
@@ -206,7 +209,6 @@ export default function CreateDestination({ route, navigation }) {
           // Check if user has an ongoing journey
           console.log(singleDoc.data());
           if (singleDoc.data().isOngoingJourney === true) {
-            console.log(singleDoc.data(), ">>>>");
             // Save the details of that person in an array
             ongoingJourneyUsers.push(singleDoc.data());
           } else {
@@ -236,7 +238,7 @@ export default function CreateDestination({ route, navigation }) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+    <View style={[styles.container]}>
       <View style={styles.navBar}>
         <ImageBackground
           source={{

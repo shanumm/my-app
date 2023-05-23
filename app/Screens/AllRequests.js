@@ -141,7 +141,7 @@ const AllRequests = () => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* <Text>AllRequests</Text> */}
       <View style={styles.navBar}>
         <ImageBackground

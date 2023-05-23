@@ -341,7 +341,7 @@ const Landing = ({ route }) => {
           }}
         >
           <TouchableOpacity
-            onPress={() => navigation.toggleDrawer()}
+            // onPress={() => navigation.toggleDrawer()}
             style={styles.menuIcon}
           >
             <Image
