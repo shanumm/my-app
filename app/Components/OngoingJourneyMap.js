@@ -240,15 +240,13 @@ const OngoingJourneyMap = ({
         const invitedPeople =
           data.data()[[selectedJourneyDetails.main_uuid]].invitedPeople;
 
-        const travellers = invitedPeople
-          .filter((person) => person.accepted && person.coords)
-          .map((person) => {
-            if (person.phoneNumber === currentUserDetails.phoneNumber) {
-              return { ...person, isPaused: isJourneyPaused };
-            } else {
-              return person;
-            }
-          });
+        const travellers = invitedPeople.map((person) => {
+          if (person.phoneNumber === currentUserDetails.phoneNumber) {
+            return { ...person, isPaused: isJourneyPaused };
+          } else {
+            return person;
+          }
+        });
         let updatedPath = `${selectedJourneyDetails.main_uuid}.invitedPeople`;
 
         await updateDoc(journeyRef, { [updatedPath]: travellers });
