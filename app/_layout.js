@@ -14,6 +14,8 @@ import InvitePeople from "./Screens/InvitePeople";
 import OngoingJourney from "./OngoingJourney";
 import AllRequests from "./Screens/AllRequests";
 
+console.log("🏗️ _layout.js: Layout component loaded");
+
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
@@ -31,68 +33,75 @@ const HomeNavigator = () => {
 };
 
 const Layout = () => {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="AuthLoading"
-        component={AuthLoading}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen name="Onboard" options={{ headerShown: false }}>
-        {(props) => <Onboard {...props} />}
-      </Stack.Screen>
-      <Stack.Screen
-        name="Login"
-        component={Login}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Location"
-        component={LocationComponent}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="HomeNavigator"
-        component={HomeNavigator}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="ProfileView"
-        component={ProfileView}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="SearchComponent"
-        component={FullScreenSearch}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="CreateDestination"
-        component={CreateDestination}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="AllRequests"
-        component={AllRequests}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="History"
-        component={History}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="OngoingJourney"
-        component={OngoingJourney}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="InvitePeople"
-        component={InvitePeople}
-        options={{ headerShown: false }}
-      />
-    </Stack.Navigator>
-  );
+  console.log("🏗️ _layout.js: Layout component rendering...");
+
+  try {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen
+          name="AuthLoading"
+          component={AuthLoading}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="Onboard" options={{ headerShown: false }}>
+          {(props) => <Onboard {...props} />}
+        </Stack.Screen>
+        <Stack.Screen
+          name="Login"
+          component={Login}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Location"
+          component={LocationComponent}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="HomeNavigator"
+          component={HomeNavigator}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ProfileView"
+          component={ProfileView}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SearchComponent"
+          component={FullScreenSearch}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CreateDestination"
+          component={CreateDestination}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AllRequests"
+          component={AllRequests}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="History"
+          component={History}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="OngoingJourney"
+          component={OngoingJourney}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="InvitePeople"
+          component={InvitePeople}
+          options={{ headerShown: false }}
+        />
+      </Stack.Navigator>
+    );
+  } catch (error) {
+    console.error("🏗️ _layout.js: Error in Layout component:", error);
+    throw error;
+  }
 };
 
 export default Layout;

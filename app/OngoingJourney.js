@@ -149,7 +149,11 @@ const OngoingJourney = ({ route }) => {
     }
 
     try {
-      const journeyRef = doc(db, "journeys", invitedJourneyDetails.admin_email);
+      const journeyRef = doc(
+        db(),
+        "journeys",
+        invitedJourneyDetails.admin_email
+      );
       const docSnap = await getDoc(journeyRef);
 
       if (docSnap.exists()) {

@@ -4,19 +4,17 @@ import {
   StyleSheet,
   View,
   Text,
+  TextInput,
   Image,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { Input, Button } from "react-native-elements";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { Ionicons } from "@expo/vector-icons";
 import LoginBG from "../assets/loginbg.jpg";
 import { auth, db } from "../firebase";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
-  signInWithPopup,
-  GoogleAuthProvider,
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { arrayUnion, doc, setDoc } from "firebase/firestore";
@@ -98,27 +96,9 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        // This gives you a Google Access Token. You can use it to access the Google API.
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential.accessToken;
-        // The signed-in user info.
-        const user = result.user;
-        // IdP data available using getAdditionalUserInfo(result)
-        // ...
-      })
-      .catch((error) => {
-        // Handle Errors here.
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        const email = error.customData.email;
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
-      });
+    // Google login is not available in React Native with current Firebase setup
+    // This would require additional configuration with expo-auth-session
+    console.log("Google login not implemented for React Native");
   };
   // useEffect(() => {
   //   onAuthStateChanged(auth, (user) => {
@@ -173,108 +153,118 @@ const Login = () => {
           </View>
           <View>
             {!isLogin && (
-              <Input
-                placeholder="Name"
-                leftIcon={<Icon name="user" size={18} color="grey" />}
-                onChangeText={(value) => setName(value)}
-                value={name}
-                inputStyle={styles.input}
-                containerStyle={styles.inputContainer}
-                inputContainerStyle={{
-                  borderBottomWidth: 0,
-                  marginBottom: 0,
-                  backgroundColor: "white",
-                  paddingHorizontal: 10,
-                  borderRadius: 10,
-                }}
-                errorMessage={
-                  name.length > 0 && name.length < 4
-                    ? "Name must be at least 4 characters"
-                    : null
-                }
-              />
+              <View style={styles.inputContainer}>
+                <View style={styles.inputWrapper}>
+                  <Ionicons
+                    name="person"
+                    size={18}
+                    color="grey"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    placeholder="Name"
+                    onChangeText={(value) => setName(value)}
+                    value={name}
+                    style={styles.input}
+                    placeholderTextColor="grey"
+                  />
+                </View>
+                {name.length > 0 && name.length < 4 && (
+                  <Text style={styles.errorText}>
+                    Name must be at least 4 characters
+                  </Text>
+                )}
+              </View>
             )}
             {!isLogin && (
-              <Input
-                placeholder="Phone Number"
-                leftIcon={<Icon name="phone" size={18} color="grey" />}
-                onChangeText={(value) => setPhoneNumber(value)}
-                value={phoneNumber}
-                inputStyle={styles.input}
-                textContentType="telephoneNumber"
-                maxLength={10}
-                containerStyle={styles.inputContainer}
-                inputContainerStyle={{
-                  borderBottomWidth: 0,
-                  marginBottom: 0,
-                  backgroundColor: "white",
-                  paddingHorizontal: 10,
-                  borderRadius: 10,
-                }}
-                errorMessage={
-                  phoneNumber.length > 0 && !/^\d+$/.test(phoneNumber)
-                    ? "Invalid phone number"
-                    : null
-                }
-              />
+              <View style={styles.inputContainer}>
+                <View style={styles.inputWrapper}>
+                  <Ionicons
+                    name="call"
+                    size={18}
+                    color="grey"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    placeholder="Phone Number"
+                    onChangeText={(value) => setPhoneNumber(value)}
+                    value={phoneNumber}
+                    style={styles.input}
+                    textContentType="telephoneNumber"
+                    maxLength={10}
+                    keyboardType="phone-pad"
+                    placeholderTextColor="grey"
+                  />
+                </View>
+                {phoneNumber.length > 0 && !/^\d+$/.test(phoneNumber) && (
+                  <Text style={styles.errorText}>Invalid phone number</Text>
+                )}
+              </View>
             )}
-            <Input
-              placeholder="Email"
-              leftIcon={<Icon name="user" size={18} color="gray" />}
-              onChangeText={(value) => setEmail(value)}
-              value={email}
-              inputStyle={styles.input}
-              containerStyle={styles.inputContainer}
-              inputContainerStyle={{
-                borderBottomWidth: 0,
-                marginBottom: 0,
-                backgroundColor: "white",
-                paddingHorizontal: 10,
-                borderRadius: 10,
-              }}
-              errorMessage={
-                isLogin
-                  ? null
-                  : email === ""
-                  ? null
-                  : /\S+@\S+\.\S+/.test(email)
-                  ? null
-                  : "Invalid email format"
-              }
-            />
-            <Input
-              placeholder="Password"
-              leftIcon={<Icon name="lock" size={18} color="gray" />}
-              onChangeText={(value) => setPassword(value)}
-              value={password}
-              inputStyle={styles.input}
-              containerStyle={styles.inputContainer}
-              inputContainerStyle={{
-                borderBottomWidth: 0,
-                marginBottom: 0,
-                backgroundColor: "white",
-                paddingHorizontal: 10,
-                borderRadius: 10,
-              }}
-              secureTextEntry
-              errorMessage={
-                isLogin
-                  ? null
-                  : password === ""
-                  ? null
-                  : /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/.test(password) &&
-                    password.length >= 8
-                  ? null
-                  : "Password must be at least 8 characters and contain both letters and numbers"
-              }
-            />
-            <Button
-              title={isLogin ? "Log In" : "Create Account"}
+            <View style={styles.inputContainer}>
+              <View style={styles.inputWrapper}>
+                <Ionicons
+                  name="mail"
+                  size={18}
+                  color="gray"
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  placeholder="Email"
+                  onChangeText={(value) => setEmail(value)}
+                  value={email}
+                  style={styles.input}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholderTextColor="grey"
+                />
+              </View>
+              {!isLogin && email !== "" && !/\S+@\S+\.\S+/.test(email) && (
+                <Text style={styles.errorText}>Invalid email format</Text>
+              )}
+            </View>
+            <View style={styles.inputContainer}>
+              <View style={styles.inputWrapper}>
+                <Ionicons
+                  name="lock-closed"
+                  size={18}
+                  color="gray"
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  placeholder="Password"
+                  onChangeText={(value) => setPassword(value)}
+                  value={password}
+                  style={styles.input}
+                  secureTextEntry
+                  placeholderTextColor="grey"
+                />
+              </View>
+              {!isLogin &&
+                password !== "" &&
+                !(
+                  /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/.test(password) &&
+                  password.length >= 8
+                ) && (
+                  <Text style={styles.errorText}>
+                    Password must be at least 8 characters and contain both
+                    letters and numbers
+                  </Text>
+                )}
+            </View>
+            <TouchableOpacity
               onPress={handleLogin}
               disabled={isDisabled}
-              buttonStyle={styles.loginButton}
-              loading={isLoading}
-            />
+              style={[styles.loginButton, isDisabled && styles.disabledButton]}
+            >
+              {isLoading ? (
+                <Text style={styles.buttonText}>Loading...</Text>
+              ) : (
+                <Text style={styles.buttonText}>
+                  {isLogin ? "Log In" : "Create Account"}
+                </Text>
+              )}
+            </TouchableOpacity>
 
             <TouchableOpacity onPress={handleToggleForm}>
               <Text style={styles.toggleForm}>
@@ -282,20 +272,18 @@ const Login = () => {
               </Text>
             </TouchableOpacity>
             <View style={styles.divider} />
-            <Button
-              title="Log in with Google"
-              buttonStyle={styles.googleButton}
-              titleStyle={styles.buttonText}
+            <TouchableOpacity
+              style={styles.googleButton}
               onPress={handleGoogleLogin}
-              icon={
-                <Icon
-                  name="google"
-                  size={24}
-                  color="#D14735"
-                  style={styles.socialIcon}
-                />
-              }
-            />
+            >
+              <Ionicons
+                name="logo-google"
+                size={24}
+                color="#D14735"
+                style={styles.socialIcon}
+              />
+              <Text style={styles.buttonText}>Log in with Google</Text>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
       </ScrollView>
@@ -342,24 +330,47 @@ const styles = StyleSheet.create({
     width: 300,
   },
   inputWrapper: {
-    marginBottom: -5,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginBottom: 5,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    paddingLeft: 10,
+    flex: 1,
+    paddingVertical: 12,
     color: "black",
-    borderRadius: 10,
+    fontSize: 16,
   },
   inputContainer: {
     width: 350,
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    marginBottom: 10,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 2,
+    marginLeft: 10,
   },
   loginButton: {
     backgroundColor: "#02C08C",
     paddingHorizontal: 110,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
+    marginTop: 10,
+  },
+  disabledButton: {
+    backgroundColor: "#ccc",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   socialIcon: {
     marginRight: 12,
@@ -372,10 +383,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
-  },
-  buttonText: {
-    color: "black",
-    fontWeight: "400",
+    justifyContent: "center",
   },
 
   switchContainer: {

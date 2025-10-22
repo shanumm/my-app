@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { auth } from "../firebase";
-import { getAuth } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AuthLoading = () => {
@@ -23,16 +23,22 @@ const AuthLoading = () => {
   };
 
   useEffect(() => {
-    const checkTokenAndNavigate = async () => {
-      if (await isTokenAvailable()) {
-        navigation.navigate("HomeNavigator");
-      } else {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        if (user || (await isTokenAvailable())) {
+          navigation.navigate("HomeNavigator");
+        } else {
+          navigation.navigate("Onboard");
+        }
+      } catch (error) {
+        console.log("Auth error:", error);
         navigation.navigate("Onboard");
+      } finally {
+        setAuthLoading(false);
       }
-      setAuthLoading(false);
-    };
+    });
 
-    checkTokenAndNavigate();
+    return () => unsubscribe();
   }, [navigation]);
 
   if (authLoading) {
