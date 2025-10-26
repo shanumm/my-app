@@ -1,5 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { MenuProvider } from "react-native-popup-menu";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import Layout from "./app/_layout";
 import { useState } from "react";
 
@@ -10,11 +11,13 @@ const App = () => {
 
   try {
     return (
-      <NavigationContainer>
-        <MenuProvider>
-          <Layout />
-        </MenuProvider>
-      </NavigationContainer>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <MenuProvider>
+            <Layout />
+          </MenuProvider>
+        </NavigationContainer>
+      </SafeAreaProvider>
     );
   } catch (error) {
     console.error("📱 App.js: Error in App component:", error);
