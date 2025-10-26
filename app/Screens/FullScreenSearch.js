@@ -58,10 +58,13 @@ const SearchContainer = ({ navigation, route }) => {
     console.log(selectedItem, ">>>>>");
     if (selectedItem) {
       if (!fromDestination.length) {
-        navigation.navigate("Home", {
-          selectedItem,
-          key: selectedItem.place_id,
-          fromSearchScreen: true,
+        navigation.navigate("HomeNavigator", {
+          screen: "Home",
+          params: {
+            selectedItem,
+            key: selectedItem.place_id,
+            fromSearchScreen: true,
+          },
         });
       } else {
         navigation.navigate(fromDestination, {

@@ -260,7 +260,7 @@ const OngoingJourney = ({ route }) => {
   };
 
   const handleGoBack = () => {
-    navigation.navigate("Home");
+    navigation.navigate("HomeNavigator");
   };
 
   const InvitedPeopleComponent = ({ invitedPeopleList }) => {

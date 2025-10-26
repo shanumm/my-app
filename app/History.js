@@ -52,7 +52,7 @@ const History = ({ navigation }) => {
       .catch((error) => {});
   };
   const handleBack = () => {
-    navigation.navigate("Home");
+    navigation.navigate("HomeNavigator");
   };
 
   const { width: viewportWidth } = Dimensions.get("window");

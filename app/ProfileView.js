@@ -51,7 +51,7 @@ const ProfileView = ({ navigation }) => {
       .catch((error) => {});
   };
   const handleBack = () => {
-    navigation.navigate("Home");
+    navigation.navigate("HomeNavigator");
   };
 
   return (
